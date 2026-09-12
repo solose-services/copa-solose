@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { shouldProtectPath } from "@/lib/auth/protected-paths";
 import { getSupabaseEnv } from "@/lib/env";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const { url, anonKey } = getSupabaseEnv();
