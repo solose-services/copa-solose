@@ -35,6 +35,14 @@ export async function crearJornada(
     });
 
     if (error) {
+      if (error.code === "23505") {
+        return {
+          errors: {
+            orden: "Ya existe una jornada con ese orden en este torneo.",
+          },
+        };
+      }
+
       return { errors: {}, errorGeneral: "No se pudo crear la jornada. Intenta de nuevo." };
     }
 

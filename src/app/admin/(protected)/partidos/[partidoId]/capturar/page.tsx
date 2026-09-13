@@ -48,22 +48,32 @@ export default async function CapturarPartidoPage({
     .eq("id", partido.equipo_visitante_id)
     .maybeSingle();
 
-  const { data: jugadorasLocal } = await supabase
+  const {
+    data: jugadorasLocal,
+    error: jugadorasLocalError,
+  } = await supabase
     .from("jugadoras")
     .select("id, nombre")
     .eq("equipo_id", partido.equipo_local_id)
     .order("nombre");
 
-  const { data: jugadorasVisitante } = await supabase
+  const {
+    data: jugadorasVisitante,
+    error: jugadorasVisitanteError,
+  } = await supabase
     .from("jugadoras")
     .select("id, nombre")
     .eq("equipo_id", partido.equipo_visitante_id)
     .order("nombre");
 
-  const { data: alineaciones } = await supabase
+  const { data: alineaciones, error: alineacionesError } = await supabase
     .from("alineaciones")
     .select("jugadora_id")
     .eq("partido_id", partidoId);
+
+  const hayErrorAlineacion = Boolean(
+    jugadorasLocalError || jugadorasVisitanteError || alineacionesError
+  );
 
   const { data: golesDetalle, error: golesError } = await supabase
     .from("goles")
@@ -93,6 +103,18 @@ export default async function CapturarPartidoPage({
     ])
   );
 
+  const mvpEnLista = jugadorasQueJugaron.some((j) => j.id === partido.mvp_jugadora_id);
+  const opcionesMvp =
+    partido.mvp_jugadora_id && !mvpEnLista
+      ? [
+          ...jugadorasQueJugaron,
+          {
+            id: partido.mvp_jugadora_id,
+            nombre: nombrePorJugadora.get(partido.mvp_jugadora_id) ?? "Jugadora",
+          },
+        ]
+      : jugadorasQueJugaron;
+
   const idsLocal = new Set((jugadorasLocal ?? []).map((jugadora) => jugadora.id));
   const idsVisitante = new Set((jugadorasVisitante ?? []).map((jugadora) => jugadora.id));
   const golesLocal = (golesDetalle ?? []).filter((gol) => idsLocal.has(gol.jugadora_id)).length;
@@ -119,16 +141,22 @@ export default async function CapturarPartidoPage({
       <p className="text-sm text-gray-600">
         {jornada?.etiqueta ?? "Jornada"} · {partido.fecha ?? "Sin fecha"}
       </p>
-      <AlineacionForm
-        partidoId={partidoId}
-        equipoLocalId={partido.equipo_local_id}
-        equipoVisitanteId={partido.equipo_visitante_id}
-        nombreLocal={equipoLocal?.nombre ?? "Local"}
-        nombreVisitante={equipoVisitante?.nombre ?? "Visitante"}
-        jugadorasLocal={jugadorasLocal ?? []}
-        jugadorasVisitante={jugadorasVisitante ?? []}
-        seleccionadasIniciales={(alineaciones ?? []).map((fila) => fila.jugadora_id)}
-      />
+      {hayErrorAlineacion ? (
+        <p className="text-red-600">
+          No se pudo cargar la información de la alineación. Intenta de nuevo.
+        </p>
+      ) : (
+        <AlineacionForm
+          partidoId={partidoId}
+          equipoLocalId={partido.equipo_local_id}
+          equipoVisitanteId={partido.equipo_visitante_id}
+          nombreLocal={equipoLocal?.nombre ?? "Local"}
+          nombreVisitante={equipoVisitante?.nombre ?? "Visitante"}
+          jugadorasLocal={jugadorasLocal ?? []}
+          jugadorasVisitante={jugadorasVisitante ?? []}
+          seleccionadasIniciales={(alineaciones ?? []).map((fila) => fila.jugadora_id)}
+        />
+      )}
       <section className="flex flex-col gap-3 rounded border p-4">
         <h2 className="font-semibold">Goles</h2>
         <GolForm partidoId={partidoId} jugadorasQueJugaron={jugadorasQueJugaron} />
@@ -174,7 +202,7 @@ export default async function CapturarPartidoPage({
       </section>
       <MvpForm
         partidoId={partidoId}
-        jugadorasQueJugaron={jugadorasQueJugaron}
+        jugadorasQueJugaron={opcionesMvp}
         mvpActual={partido.mvp_jugadora_id}
       />
       <IncidenciasForm partidoId={partidoId} incidenciasActuales={partido.incidencias} />
