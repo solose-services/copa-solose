@@ -7,6 +7,9 @@ export default function AdminHomePage() {
       <Link href="/admin/torneos" className="underline">
         Ir a Torneos
       </Link>
+      <Link href="/admin/suspensiones" className="underline">
+        Ir a Suspensiones
+      </Link>
     </div>
   );
 }
