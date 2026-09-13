@@ -14,7 +14,7 @@ export default async function JugadorasPage({
 
   const { data: equipo } = await supabase
     .from("equipos")
-    .select("nombre")
+    .select("nombre, torneo_id")
     .eq("id", equipoId)
     .maybeSingle();
 
@@ -26,6 +26,11 @@ export default async function JugadorasPage({
 
   return (
     <div className="flex flex-col gap-6">
+      {equipo?.torneo_id && (
+        <Link href={`/admin/torneos/${equipo.torneo_id}/equipos`} className="underline">
+          ← Volver a Equipos
+        </Link>
+      )}
       <h1 className="text-xl font-semibold">
         Jugadoras — {equipo?.nombre ?? "Equipo"}
       </h1>

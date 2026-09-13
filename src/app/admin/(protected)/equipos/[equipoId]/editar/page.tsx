@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { actualizarEquipo } from "../../../torneos/[torneoId]/equipos/actions";
 import { notFound } from "next/navigation";
@@ -24,6 +25,9 @@ export default async function EditarEquipoPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <Link href={`/admin/torneos/${equipo.torneo_id}/equipos`} className="underline">
+        ← Volver a Equipos
+      </Link>
       <h1 className="text-xl font-semibold">Editar equipo</h1>
       <form
         action={async (formData: FormData) => {

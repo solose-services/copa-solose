@@ -26,6 +26,9 @@ export default async function EquiposPage({
 
   return (
     <div className="flex flex-col gap-6">
+      <Link href="/admin/torneos" className="underline">
+        ← Volver a Torneos
+      </Link>
       <h1 className="text-xl font-semibold">
         Equipos — {torneo?.nombre ?? "Torneo"}
       </h1>

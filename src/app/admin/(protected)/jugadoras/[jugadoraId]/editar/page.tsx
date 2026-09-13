@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { actualizarJugadora } from "../../../equipos/[equipoId]/jugadoras/actions";
@@ -24,6 +25,9 @@ export default async function EditarJugadoraPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <Link href={`/admin/equipos/${jugadora.equipo_id}/jugadoras`} className="underline">
+        ← Volver a Jugadoras
+      </Link>
       <h1 className="text-xl font-semibold">Editar jugadora</h1>
       <form
         action={async (formData: FormData) => {
