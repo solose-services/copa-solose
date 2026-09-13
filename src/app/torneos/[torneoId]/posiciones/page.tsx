@@ -13,7 +13,8 @@ export default async function PosicionesPage({
   const { data: equipos, error: equiposError } = await supabase
     .from("equipos")
     .select("id, nombre, orden_desempate_manual")
-    .eq("torneo_id", torneoId);
+    .eq("torneo_id", torneoId)
+    .order("nombre");
 
   const equipoIds = (equipos ?? []).map((equipo) => equipo.id);
   const nombrePorEquipo = new Map((equipos ?? []).map((equipo) => [equipo.id, equipo.nombre]));

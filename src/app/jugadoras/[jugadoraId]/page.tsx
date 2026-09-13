@@ -10,17 +10,25 @@ export default async function FichaJugadoraPage({
   const { jugadoraId } = await params;
   const supabase = await createClient();
 
-  const { data: jugadora } = await supabase
+  const { data: jugadora, error: jugadoraError } = await supabase
     .from("jugadoras")
     .select("id, nombre, foto_url, numero_camiseta, equipo_id")
     .eq("id", jugadoraId)
     .maybeSingle();
 
-  if (!jugadora) {
+  if (!jugadora && !jugadoraError) {
     notFound();
   }
 
-  const { data: equipo } = await supabase
+  if (jugadoraError || !jugadora) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
+        <p className="text-red-600">No se pudo cargar la información de la jugadora. Intenta de nuevo.</p>
+      </div>
+    );
+  }
+
+  const { data: equipo, error: equipoError } = await supabase
     .from("equipos")
     .select("id, nombre")
     .eq("id", jugadora.equipo_id)
@@ -95,7 +103,8 @@ export default async function FichaJugadoraPage({
   ).length;
 
   const hayError = Boolean(
-    companerasError ||
+    equipoError ||
+      companerasError ||
       alineacionesError ||
       partidosError ||
       golesError ||

@@ -10,14 +10,22 @@ export default async function FichaEquipoPage({
   const { equipoId } = await params;
   const supabase = await createClient();
 
-  const { data: equipo } = await supabase
+  const { data: equipo, error: equipoError } = await supabase
     .from("equipos")
     .select("id, nombre, logo_url")
     .eq("id", equipoId)
     .maybeSingle();
 
-  if (!equipo) {
+  if (!equipo && !equipoError) {
     notFound();
+  }
+
+  if (equipoError || !equipo) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
+        <p className="text-red-600">No se pudo cargar la información del equipo. Intenta de nuevo.</p>
+      </div>
+    );
   }
 
   const { data: jugadoras, error: jugadorasError } = await supabase
@@ -30,15 +38,20 @@ export default async function FichaEquipoPage({
 
   const { data: partidosLocal, error: partidosLocalError } = await supabase
     .from("partidos")
-    .select("id")
+    .select("id, fecha")
     .eq("equipo_local_id", equipoId);
 
   const { data: partidosVisitante, error: partidosVisitanteError } = await supabase
     .from("partidos")
-    .select("id")
+    .select("id, fecha")
     .eq("equipo_visitante_id", equipoId);
 
-  const partidos = [...(partidosLocal ?? []), ...(partidosVisitante ?? [])];
+  const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(
+    new Date()
+  );
+  const partidos = [...(partidosLocal ?? []), ...(partidosVisitante ?? [])].filter(
+    (partido) => partido.fecha && partido.fecha <= hoy
+  );
   const partidoIds = partidos.map((partido) => partido.id);
 
   const { data: goles, error: golesError } =

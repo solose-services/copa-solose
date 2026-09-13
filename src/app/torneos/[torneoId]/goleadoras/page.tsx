@@ -24,6 +24,7 @@ export default async function GoleadorasPage({
           .from("jugadoras")
           .select("id, nombre, equipo_id")
           .in("equipo_id", equipoIds)
+          .order("nombre")
       : { data: [] as { id: string; nombre: string; equipo_id: string }[], error: null };
 
   const jugadoraIds = (jugadoras ?? []).map((jugadora) => jugadora.id);
@@ -46,7 +47,7 @@ export default async function GoleadorasPage({
       goles: golesPorJugadora.get(jugadora.id) ?? 0,
     }))
     .filter((fila) => fila.goles > 0)
-    .sort((a, b) => b.goles - a.goles);
+    .sort((a, b) => b.goles - a.goles || a.nombre.localeCompare(b.nombre));
 
   const hayError = Boolean(equiposError || jugadorasError || golesError);
 
