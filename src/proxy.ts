@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { shouldProtectPath } from "@/lib/auth/protected-paths";
+import { isAdminUser } from "@/lib/auth/is-admin-user";
 import { getSupabaseEnv } from "@/lib/env";
 
 export async function proxy(request: NextRequest) {
@@ -26,11 +27,15 @@ export async function proxy(request: NextRequest) {
       },
     });
 
+    if (!shouldProtectPath(request.nextUrl.pathname)) {
+      return response;
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (shouldProtectPath(request.nextUrl.pathname) && !user) {
+    if (!user || !(await isAdminUser(supabase, user.id))) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
 
