@@ -759,31 +759,45 @@ Expected: all tests pass, including the 3 new ones.
 // src/components/admin/delete-button.tsx
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 export function DeleteButton({
   onDelete,
   confirmMessage,
 }: {
-  onDelete: () => Promise<void>;
+  onDelete: () => Promise<{ error?: string } | void>;
   confirmMessage: string;
 }) {
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function handleClick() {
+    if (!window.confirm(confirmMessage)) return;
+    setError(null);
+    startTransition(async () => {
+      const result = await onDelete();
+      if (result && result.error) {
+        setError(result.error);
+      }
+    });
+  }
 
   return (
-    <button
-      onClick={() => {
-        if (!window.confirm(confirmMessage)) return;
-        startTransition(onDelete);
-      }}
-      disabled={pending}
-      className="rounded border border-red-600 px-3 py-1 text-sm text-red-600 disabled:opacity-50"
-    >
-      {pending ? "Eliminando…" : "Eliminar"}
-    </button>
+    <div className="flex flex-col gap-1">
+      <button
+        onClick={handleClick}
+        disabled={pending}
+        className="rounded border border-red-600 px-3 py-1 text-sm text-red-600 disabled:opacity-50"
+      >
+        {pending ? "Eliminando…" : "Eliminar"}
+      </button>
+      {error && <span className="text-xs text-red-600">{error}</span>}
+    </div>
   );
 }
 ```
+
+**Nota de manejo de errores:** todas las funciones `"use server"` de este plan que llaman a Supabase deben envolver la llamada en `try/catch`, devolviendo un mensaje de error legible en vez de dejar que una excepción se propague sin control (este patrón ya se corrigió dos veces en la fase anterior y una vez en la Tarea 3 de esta fase — replicarlo desde el principio evita repetir la corrección). Las acciones de creación/edición (`crearX`/`actualizarX`) devuelven su `errorGeneral` existente en el `catch`; las de eliminar (`eliminarX`) devuelven `{ error: string }` en el `catch`, igual que se muestra en cada acción de este plan a partir de aquí.
 
 - [ ] **Step 6: Server actions**
 
@@ -816,19 +830,23 @@ export async function crearEquipo(
     return { errors };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("equipos").insert({
-    torneo_id: torneoId,
-    nombre: values.nombre,
-    logo_url: values.logoUrl || null,
-  });
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("equipos").insert({
+      torneo_id: torneoId,
+      nombre: values.nombre,
+      logo_url: values.logoUrl || null,
+    });
 
-  if (error) {
+    if (error) {
+      return { errors: {}, errorGeneral: "No se pudo crear el equipo. Intenta de nuevo." };
+    }
+
+    revalidatePath(`/admin/torneos/${torneoId}/equipos`);
+    return { errors: {} };
+  } catch {
     return { errors: {}, errorGeneral: "No se pudo crear el equipo. Intenta de nuevo." };
   }
-
-  revalidatePath(`/admin/torneos/${torneoId}/equipos`);
-  return { errors: {} };
 }
 
 export async function actualizarEquipo(
@@ -847,13 +865,17 @@ export async function actualizarEquipo(
     return { errors };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("equipos")
-    .update({ nombre: values.nombre, logo_url: values.logoUrl || null })
-    .eq("id", equipoId);
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("equipos")
+      .update({ nombre: values.nombre, logo_url: values.logoUrl || null })
+      .eq("id", equipoId);
 
-  if (error) {
+    if (error) {
+      return { errors: {}, errorGeneral: "No se pudo guardar el cambio. Intenta de nuevo." };
+    }
+  } catch {
     return { errors: {}, errorGeneral: "No se pudo guardar el cambio. Intenta de nuevo." };
   }
 
@@ -861,10 +883,23 @@ export async function actualizarEquipo(
   redirect(`/admin/torneos/${torneoId}/equipos`);
 }
 
-export async function eliminarEquipo(equipoId: string, torneoId: string) {
-  const supabase = await createClient();
-  await supabase.from("equipos").delete().eq("id", equipoId);
-  revalidatePath(`/admin/torneos/${torneoId}/equipos`);
+export async function eliminarEquipo(
+  equipoId: string,
+  torneoId: string
+): Promise<{ error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("equipos").delete().eq("id", equipoId);
+
+    if (error) {
+      return { error: "No se pudo eliminar el equipo. Intenta de nuevo." };
+    }
+
+    revalidatePath(`/admin/torneos/${torneoId}/equipos`);
+    return {};
+  } catch {
+    return { error: "No se pudo eliminar el equipo. Intenta de nuevo." };
+  }
 }
 ```
 
@@ -935,7 +970,7 @@ export default async function EquiposPage({
     .eq("id", torneoId)
     .maybeSingle();
 
-  const { data: equipos } = await supabase
+  const { data: equipos, error: equiposError } = await supabase
     .from("equipos")
     .select("id, nombre, logo_url")
     .eq("torneo_id", torneoId)
@@ -947,6 +982,9 @@ export default async function EquiposPage({
         Equipos — {torneo?.nombre ?? "Torneo"}
       </h1>
       <EquipoForm torneoId={torneoId} />
+      {equiposError ? (
+        <p className="text-red-600">No se pudieron cargar los equipos. Intenta de nuevo.</p>
+      ) : (
       <table className="w-full text-left">
         <thead>
           <tr>
@@ -980,6 +1018,7 @@ export default async function EquiposPage({
           ))}
         </tbody>
       </table>
+      )}
     </div>
   );
 }
@@ -1195,23 +1234,30 @@ export async function crearJugadora(
     return { errors };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("jugadoras").insert({
-    equipo_id: equipoId,
-    nombre: values.nombre,
-    numero_camiseta: parseNumeroCamiseta(values.numeroCamiseta),
-    foto_url: values.fotoUrl || null,
-  });
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("jugadoras").insert({
+      equipo_id: equipoId,
+      nombre: values.nombre,
+      numero_camiseta: parseNumeroCamiseta(values.numeroCamiseta),
+      foto_url: values.fotoUrl || null,
+    });
 
-  if (error) {
+    if (error) {
+      return {
+        errors: {},
+        errorGeneral: "No se pudo registrar a la jugadora. Intenta de nuevo.",
+      };
+    }
+
+    revalidatePath(`/admin/equipos/${equipoId}/jugadoras`);
+    return { errors: {} };
+  } catch {
     return {
       errors: {},
       errorGeneral: "No se pudo registrar a la jugadora. Intenta de nuevo.",
     };
   }
-
-  revalidatePath(`/admin/equipos/${equipoId}/jugadoras`);
-  return { errors: {} };
 }
 
 export async function actualizarJugadora(
@@ -1231,17 +1277,21 @@ export async function actualizarJugadora(
     return { errors };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("jugadoras")
-    .update({
-      nombre: values.nombre,
-      numero_camiseta: parseNumeroCamiseta(values.numeroCamiseta),
-      foto_url: values.fotoUrl || null,
-    })
-    .eq("id", jugadoraId);
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("jugadoras")
+      .update({
+        nombre: values.nombre,
+        numero_camiseta: parseNumeroCamiseta(values.numeroCamiseta),
+        foto_url: values.fotoUrl || null,
+      })
+      .eq("id", jugadoraId);
 
-  if (error) {
+    if (error) {
+      return { errors: {}, errorGeneral: "No se pudo guardar el cambio. Intenta de nuevo." };
+    }
+  } catch {
     return { errors: {}, errorGeneral: "No se pudo guardar el cambio. Intenta de nuevo." };
   }
 
@@ -1249,10 +1299,23 @@ export async function actualizarJugadora(
   redirect(`/admin/equipos/${equipoId}/jugadoras`);
 }
 
-export async function eliminarJugadora(jugadoraId: string, equipoId: string) {
-  const supabase = await createClient();
-  await supabase.from("jugadoras").delete().eq("id", jugadoraId);
-  revalidatePath(`/admin/equipos/${equipoId}/jugadoras`);
+export async function eliminarJugadora(
+  jugadoraId: string,
+  equipoId: string
+): Promise<{ error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("jugadoras").delete().eq("id", jugadoraId);
+
+    if (error) {
+      return { error: "No se pudo eliminar a la jugadora. Intenta de nuevo." };
+    }
+
+    revalidatePath(`/admin/equipos/${equipoId}/jugadoras`);
+    return {};
+  } catch {
+    return { error: "No se pudo eliminar a la jugadora. Intenta de nuevo." };
+  }
 }
 ```
 
@@ -1330,7 +1393,7 @@ export default async function JugadorasPage({
     .eq("id", equipoId)
     .maybeSingle();
 
-  const { data: jugadoras } = await supabase
+  const { data: jugadoras, error: jugadorasError } = await supabase
     .from("jugadoras")
     .select("id, nombre, numero_camiseta")
     .eq("equipo_id", equipoId)
@@ -1342,6 +1405,9 @@ export default async function JugadorasPage({
         Jugadoras — {equipo?.nombre ?? "Equipo"}
       </h1>
       <JugadoraForm equipoId={equipoId} />
+      {jugadorasError ? (
+        <p className="text-red-600">No se pudieron cargar las jugadoras. Intenta de nuevo.</p>
+      ) : (
       <table className="w-full text-left">
         <thead>
           <tr>
@@ -1371,6 +1437,7 @@ export default async function JugadorasPage({
           ))}
         </tbody>
       </table>
+      )}
     </div>
   );
 }
