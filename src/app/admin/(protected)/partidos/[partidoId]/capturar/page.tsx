@@ -5,6 +5,8 @@ import { AlineacionForm } from "./alineacion-form";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { GolForm } from "./gol-form";
 import { eliminarGol } from "./actions";
+import { TarjetaForm } from "./tarjeta-form";
+import { eliminarTarjeta } from "./actions";
 
 export default async function CapturarPartidoPage({
   params,
@@ -62,6 +64,12 @@ export default async function CapturarPartidoPage({
   const { data: golesDetalle, error: golesError } = await supabase
     .from("goles")
     .select("id, jugadora_id, minuto")
+    .eq("partido_id", partidoId)
+    .order("minuto");
+
+  const { data: tarjetasDetalle, error: tarjetasError } = await supabase
+    .from("tarjetas")
+    .select("id, jugadora_id, tipo, minuto")
     .eq("partido_id", partidoId)
     .order("minuto");
 
@@ -132,6 +140,28 @@ export default async function CapturarPartidoPage({
                 <DeleteButton
                   onDelete={eliminarGol.bind(null, gol.id, partidoId)}
                   confirmMessage="¿Eliminar este gol? Esto no se puede deshacer."
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <section className="flex flex-col gap-3 rounded border p-4">
+        <h2 className="font-semibold">Tarjetas</h2>
+        <TarjetaForm partidoId={partidoId} jugadorasQueJugaron={jugadorasQueJugaron} />
+        {tarjetasError ? (
+          <p className="text-red-600">No se pudieron cargar las tarjetas. Intenta de nuevo.</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {(tarjetasDetalle ?? []).map((tarjeta) => (
+              <li key={tarjeta.id} className="flex items-center gap-3">
+                <span>
+                  {nombrePorJugadora.get(tarjeta.jugadora_id) ?? "Jugadora"} — {tarjeta.tipo} —
+                  min. {tarjeta.minuto}
+                </span>
+                <DeleteButton
+                  onDelete={eliminarTarjeta.bind(null, tarjeta.id, partidoId)}
+                  confirmMessage="¿Eliminar esta tarjeta? Esto no se puede deshacer."
                 />
               </li>
             ))}

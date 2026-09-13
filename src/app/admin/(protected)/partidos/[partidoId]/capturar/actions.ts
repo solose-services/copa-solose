@@ -113,3 +113,70 @@ export async function eliminarGol(
     return { error: "No se pudo eliminar el gol. Intenta de nuevo." };
   }
 }
+
+export interface AgregarTarjetaState {
+  errors: { jugadoraId?: string; tipo?: string; minuto?: string };
+  errorGeneral?: string;
+}
+
+export async function agregarTarjeta(
+  partidoId: string,
+  _prevState: AgregarTarjetaState,
+  formData: FormData
+): Promise<AgregarTarjetaState> {
+  const jugadoraId = String(formData.get("jugadoraId") ?? "");
+  const tipo = String(formData.get("tipo") ?? "");
+  const minutoRaw = String(formData.get("minuto") ?? "");
+
+  const errors: AgregarTarjetaState["errors"] = {};
+  if (!jugadoraId) {
+    errors.jugadoraId = "Selecciona a la jugadora.";
+  }
+  if (tipo !== "amarilla" && tipo !== "roja") {
+    errors.tipo = "Selecciona un tipo de tarjeta válido.";
+  }
+  if (!/^\d+$/.test(minutoRaw.trim())) {
+    errors.minuto = "El minuto debe ser un número entero.";
+  }
+  if (Object.keys(errors).length > 0) {
+    return { errors };
+  }
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("tarjetas").insert({
+      partido_id: partidoId,
+      jugadora_id: jugadoraId,
+      tipo,
+      minuto: Number(minutoRaw),
+    });
+
+    if (error) {
+      return { errors: {}, errorGeneral: "No se pudo registrar la tarjeta. Intenta de nuevo." };
+    }
+
+    revalidatePath(`/admin/partidos/${partidoId}/capturar`);
+    return { errors: {} };
+  } catch {
+    return { errors: {}, errorGeneral: "No se pudo registrar la tarjeta. Intenta de nuevo." };
+  }
+}
+
+export async function eliminarTarjeta(
+  tarjetaId: string,
+  partidoId: string
+): Promise<{ error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("tarjetas").delete().eq("id", tarjetaId);
+
+    if (error) {
+      return { error: "No se pudo eliminar la tarjeta. Intenta de nuevo." };
+    }
+
+    revalidatePath(`/admin/partidos/${partidoId}/capturar`);
+    return {};
+  } catch {
+    return { error: "No se pudo eliminar la tarjeta. Intenta de nuevo." };
+  }
+}
