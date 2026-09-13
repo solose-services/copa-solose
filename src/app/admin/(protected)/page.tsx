@@ -10,6 +10,9 @@ export default function AdminHomePage() {
       <Link href="/admin/suspensiones" className="underline">
         Ir a Suspensiones
       </Link>
+      <Link href="/admin/avisos" className="underline">
+        Ir a Avisos
+      </Link>
     </div>
   );
 }
