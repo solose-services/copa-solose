@@ -24,24 +24,44 @@ export async function crearTorneo(
     return { errors };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("torneos").insert({
-    nombre: values.nombre,
-    categoria: values.categoria,
-    temporada: values.temporada,
-    activo: true,
-  });
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("torneos").insert({
+      nombre: values.nombre,
+      categoria: values.categoria,
+      temporada: values.temporada,
+      activo: true,
+    });
 
-  if (error) {
+    if (error) {
+      return { errors: {}, errorGeneral: "No se pudo crear el torneo. Intenta de nuevo." };
+    }
+
+    revalidatePath("/admin/torneos");
+    return { errors: {} };
+  } catch {
     return { errors: {}, errorGeneral: "No se pudo crear el torneo. Intenta de nuevo." };
   }
-
-  revalidatePath("/admin/torneos");
-  return { errors: {} };
 }
 
-export async function alternarTorneoActivo(id: string, activoActual: boolean) {
-  const supabase = await createClient();
-  await supabase.from("torneos").update({ activo: !activoActual }).eq("id", id);
-  revalidatePath("/admin/torneos");
+export async function alternarTorneoActivo(
+  id: string,
+  activoActual: boolean
+): Promise<{ error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("torneos")
+      .update({ activo: !activoActual })
+      .eq("id", id);
+
+    if (error) {
+      return { error: "No se pudo actualizar el torneo. Intenta de nuevo." };
+    }
+
+    revalidatePath("/admin/torneos");
+    return {};
+  } catch {
+    return { error: "No se pudo actualizar el torneo. Intenta de nuevo." };
+  }
 }
