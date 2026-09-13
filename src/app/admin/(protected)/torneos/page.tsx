@@ -26,6 +26,7 @@ export default async function TorneosPage() {
               <th className="p-2">Activo</th>
               <th className="p-2"></th>
               <th className="p-2"></th>
+              <th className="p-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -41,6 +42,11 @@ export default async function TorneosPage() {
                 <td className="p-2">
                   <Link href={`/admin/torneos/${torneo.id}/equipos`} className="underline">
                     Ver equipos
+                  </Link>
+                </td>
+                <td className="p-2">
+                  <Link href={`/admin/torneos/${torneo.id}/jornadas`} className="underline">
+                    Ver jornadas
                   </Link>
                 </td>
               </tr>
