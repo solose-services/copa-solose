@@ -6,34 +6,42 @@ import { getSupabaseEnv } from "@/lib/env";
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const { url, anonKey } = getSupabaseEnv();
+  try {
+    const { url, anonKey } = getSupabaseEnv();
 
-  const supabase = createServerClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
+    const supabase = createServerClient(url, anonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
       },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value)
-        );
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        );
-      },
-    },
-  });
+    });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (shouldProtectPath(request.nextUrl.pathname) && !user) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    if (shouldProtectPath(request.nextUrl.pathname) && !user) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+
+    return response;
+  } catch {
+    if (shouldProtectPath(request.nextUrl.pathname)) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+
+    return response;
   }
-
-  return response;
 }
 
 export const config = {

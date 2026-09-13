@@ -34,7 +34,7 @@ export default function LoginPage() {
 
       router.push("/admin");
       router.refresh();
-    } catch (err) {
+    } catch {
       setErrorGeneral("No se pudo conectar. Intenta de nuevo.");
     } finally {
       setCargando(false);
