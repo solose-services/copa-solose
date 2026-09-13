@@ -12,7 +12,7 @@ export default async function DetallePartidoPage({
   const { partidoId } = await params;
   const supabase = await createClient();
 
-  const { data: partido } = await supabase
+  const { data: partido, error: partidoError } = await supabase
     .from("partidos")
     .select(
       "id, jornada_id, equipo_local_id, equipo_visitante_id, fecha, hora, mvp_jugadora_id, incidencias"
@@ -24,30 +24,30 @@ export default async function DetallePartidoPage({
     notFound();
   }
 
-  const { data: jornada } = await supabase
+  const { data: jornada, error: jornadaError } = await supabase
     .from("jornadas")
     .select("etiqueta")
     .eq("id", partido.jornada_id)
     .maybeSingle();
 
-  const { data: equipoLocal } = await supabase
+  const { data: equipoLocal, error: equipoLocalError } = await supabase
     .from("equipos")
     .select("nombre")
     .eq("id", partido.equipo_local_id)
     .maybeSingle();
 
-  const { data: equipoVisitante } = await supabase
+  const { data: equipoVisitante, error: equipoVisitanteError } = await supabase
     .from("equipos")
     .select("nombre")
     .eq("id", partido.equipo_visitante_id)
     .maybeSingle();
 
-  const { data: jugadorasLocal } = await supabase
+  const { data: jugadorasLocal, error: jugadorasLocalError } = await supabase
     .from("jugadoras")
     .select("id, nombre")
     .eq("equipo_id", partido.equipo_local_id);
 
-  const { data: jugadorasVisitante } = await supabase
+  const { data: jugadorasVisitante, error: jugadorasVisitanteError } = await supabase
     .from("jugadoras")
     .select("id, nombre")
     .eq("equipo_id", partido.equipo_visitante_id);
@@ -61,22 +61,34 @@ export default async function DetallePartidoPage({
     ])
   );
 
-  const { data: alineaciones } = await supabase
+  const { data: alineaciones, error: alineacionesError } = await supabase
     .from("alineaciones")
     .select("jugadora_id")
     .eq("partido_id", partidoId);
 
-  const { data: goles } = await supabase
+  const { data: goles, error: golesError } = await supabase
     .from("goles")
     .select("jugadora_id, minuto")
     .eq("partido_id", partidoId)
     .order("minuto");
 
-  const { data: tarjetas } = await supabase
+  const { data: tarjetas, error: tarjetasError } = await supabase
     .from("tarjetas")
     .select("jugadora_id, tipo, minuto")
     .eq("partido_id", partidoId)
     .order("minuto");
+
+  const hayError = Boolean(
+    partidoError ||
+      jornadaError ||
+      equipoLocalError ||
+      equipoVisitanteError ||
+      jugadorasLocalError ||
+      jugadorasVisitanteError ||
+      alineacionesError ||
+      golesError ||
+      tarjetasError
+  );
 
   const { golesLocal, golesVisitante } = contarMarcador(
     (goles ?? []).map((gol) => ({ jugadoraId: gol.jugadora_id })),
@@ -93,83 +105,89 @@ export default async function DetallePartidoPage({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <h1 className="text-xl font-semibold">
-        <NombreEquipo id={partido.equipo_local_id} nombre={equipoLocal?.nombre ?? "Local"} />{" "}
-        {golesLocal} — {golesVisitante}{" "}
-        <NombreEquipo
-          id={partido.equipo_visitante_id}
-          nombre={equipoVisitante?.nombre ?? "Visitante"}
-        />
-      </h1>
-      <p className="text-sm text-gray-600">
-        {jornada?.etiqueta ?? "Jornada"} · {partido.fecha ?? "Sin fecha"}
-      </p>
+      {hayError ? (
+        <p className="text-red-600">No se pudo cargar el detalle del partido. Intenta de nuevo.</p>
+      ) : (
+        <>
+          <h1 className="text-xl font-semibold">
+            <NombreEquipo id={partido.equipo_local_id} nombre={equipoLocal?.nombre ?? "Local"} />{" "}
+            {golesLocal} — {golesVisitante}{" "}
+            <NombreEquipo
+              id={partido.equipo_visitante_id}
+              nombre={equipoVisitante?.nombre ?? "Visitante"}
+            />
+          </h1>
+          <p className="text-sm text-gray-600">
+            {jornada?.etiqueta ?? "Jornada"} · {partido.fecha ?? "Sin fecha"}
+          </p>
 
-      <section>
-        <h2 className="font-semibold">Alineaciones</h2>
-        <div className="flex flex-wrap gap-8">
-          <ul>
-            {jugadorasQueJugaronLocal.map((jugadora) => (
-              <li key={jugadora.id}>
-                <NombreJugadora id={jugadora.id} nombre={jugadora.nombre} />
-              </li>
-            ))}
-          </ul>
-          <ul>
-            {jugadorasQueJugaronVisitante.map((jugadora) => (
-              <li key={jugadora.id}>
-                <NombreJugadora id={jugadora.id} nombre={jugadora.nombre} />
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+          <section>
+            <h2 className="font-semibold">Alineaciones</h2>
+            <div className="flex flex-wrap gap-8">
+              <ul>
+                {jugadorasQueJugaronLocal.map((jugadora) => (
+                  <li key={jugadora.id}>
+                    <NombreJugadora id={jugadora.id} nombre={jugadora.nombre} />
+                  </li>
+                ))}
+              </ul>
+              <ul>
+                {jugadorasQueJugaronVisitante.map((jugadora) => (
+                  <li key={jugadora.id}>
+                    <NombreJugadora id={jugadora.id} nombre={jugadora.nombre} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
 
-      <section>
-        <h2 className="font-semibold">Goles</h2>
-        <ul>
-          {(goles ?? []).map((gol, indice) => (
-            <li key={indice}>
+          <section>
+            <h2 className="font-semibold">Goles</h2>
+            <ul>
+              {(goles ?? []).map((gol, indice) => (
+                <li key={indice}>
+                  <NombreJugadora
+                    id={gol.jugadora_id}
+                    nombre={nombrePorJugadora.get(gol.jugadora_id) ?? "Jugadora"}
+                  />{" "}
+                  — min. {gol.minuto}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="font-semibold">Tarjetas</h2>
+            <ul>
+              {(tarjetas ?? []).map((tarjeta, indice) => (
+                <li key={indice}>
+                  <NombreJugadora
+                    id={tarjeta.jugadora_id}
+                    nombre={nombrePorJugadora.get(tarjeta.jugadora_id) ?? "Jugadora"}
+                  />{" "}
+                  — {tarjeta.tipo} — min. {tarjeta.minuto}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {partido.mvp_jugadora_id && (
+            <p>
+              Jugadora del partido:{" "}
               <NombreJugadora
-                id={gol.jugadora_id}
-                nombre={nombrePorJugadora.get(gol.jugadora_id) ?? "Jugadora"}
-              />{" "}
-              — min. {gol.minuto}
-            </li>
-          ))}
-        </ul>
-      </section>
+                id={partido.mvp_jugadora_id}
+                nombre={nombrePorJugadora.get(partido.mvp_jugadora_id) ?? "Jugadora"}
+              />
+            </p>
+          )}
 
-      <section>
-        <h2 className="font-semibold">Tarjetas</h2>
-        <ul>
-          {(tarjetas ?? []).map((tarjeta, indice) => (
-            <li key={indice}>
-              <NombreJugadora
-                id={tarjeta.jugadora_id}
-                nombre={nombrePorJugadora.get(tarjeta.jugadora_id) ?? "Jugadora"}
-              />{" "}
-              — {tarjeta.tipo} — min. {tarjeta.minuto}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {partido.mvp_jugadora_id && (
-        <p>
-          Jugadora del partido:{" "}
-          <NombreJugadora
-            id={partido.mvp_jugadora_id}
-            nombre={nombrePorJugadora.get(partido.mvp_jugadora_id) ?? "Jugadora"}
-          />
-        </p>
-      )}
-
-      {partido.incidencias && (
-        <section>
-          <h2 className="font-semibold">Incidencias</h2>
-          <p>{partido.incidencias}</p>
-        </section>
+          {partido.incidencias && (
+            <section>
+              <h2 className="font-semibold">Incidencias</h2>
+              <p>{partido.incidencias}</p>
+            </section>
+          )}
+        </>
       )}
     </div>
   );

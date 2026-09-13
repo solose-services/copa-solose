@@ -76,7 +76,9 @@ export default async function CalendarioPage({
     partidosPorJornada.set(partido.jornada_id, lista);
   }
 
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(
+    new Date()
+  );
   const hayError = Boolean(
     jornadasError || equiposError || jugadorasError || partidosError || golesError
   );
