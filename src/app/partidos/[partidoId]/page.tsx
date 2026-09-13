@@ -20,8 +20,16 @@ export default async function DetallePartidoPage({
     .eq("id", partidoId)
     .maybeSingle();
 
-  if (!partido) {
+  if (!partido && !partidoError) {
     notFound();
+  }
+
+  if (partidoError || !partido) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
+        <p className="text-red-600">No se pudo cargar el detalle del partido. Intenta de nuevo.</p>
+      </div>
+    );
   }
 
   const { data: jornada, error: jornadaError } = await supabase
@@ -79,8 +87,7 @@ export default async function DetallePartidoPage({
     .order("minuto");
 
   const hayError = Boolean(
-    partidoError ||
-      jornadaError ||
+    jornadaError ||
       equipoLocalError ||
       equipoVisitanteError ||
       jugadorasLocalError ||
