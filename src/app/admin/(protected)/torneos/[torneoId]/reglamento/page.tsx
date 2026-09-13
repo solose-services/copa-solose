@@ -16,7 +16,7 @@ export default async function ReglamentoPage({
     .eq("id", torneoId)
     .maybeSingle();
 
-  const { data: reglamento } = await supabase
+  const { data: reglamento, error: reglamentoError } = await supabase
     .from("reglamentos")
     .select("pdf_url, actualizado_en")
     .eq("torneo_id", torneoId)
@@ -28,7 +28,9 @@ export default async function ReglamentoPage({
         ← Volver a Torneos
       </Link>
       <h1 className="text-xl font-semibold">Reglamento — {torneo?.nombre ?? "Torneo"}</h1>
-      {reglamento?.pdf_url ? (
+      {reglamentoError ? (
+        <p className="text-red-600">No se pudo cargar el reglamento actual. Intenta de nuevo.</p>
+      ) : reglamento?.pdf_url ? (
         <p>
           Reglamento actual:{" "}
           <a

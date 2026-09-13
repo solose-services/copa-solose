@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+const TAMANO_MAXIMO_BYTES = 8 * 1024 * 1024;
+
 export async function subirReglamento(
   torneoId: string,
   formData: FormData
@@ -15,6 +17,10 @@ export async function subirReglamento(
 
   if (archivo.type !== "application/pdf") {
     return { error: "El archivo debe ser un PDF." };
+  }
+
+  if (archivo.size > TAMANO_MAXIMO_BYTES) {
+    return { error: "El archivo no debe pesar más de 8 MB." };
   }
 
   try {
@@ -30,11 +36,12 @@ export async function subirReglamento(
     }
 
     const { data: publicUrlData } = supabase.storage.from("media").getPublicUrl(ruta);
+    const urlConCacheBuster = `${publicUrlData.publicUrl}?v=${Date.now()}`;
 
     const { error: dbError } = await supabase.from("reglamentos").upsert(
       {
         torneo_id: torneoId,
-        pdf_url: publicUrlData.publicUrl,
+        pdf_url: urlConCacheBuster,
         actualizado_en: new Date().toISOString(),
       },
       { onConflict: "torneo_id" }

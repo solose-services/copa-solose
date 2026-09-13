@@ -44,8 +44,8 @@ export default async function SuspensionesPage() {
 
   const { data: suspensiones, error: suspensionesError } = await supabase
     .from("suspensiones")
-    .select("id, jugadora_id, jornada_desde_id, jornada_hasta_id, motivo")
-    .order("id", { ascending: false });
+    .select("id, jugadora_id, jornada_desde_id, jornada_hasta_id, motivo, created_at")
+    .order("created_at", { ascending: false });
 
   const hayErrorDeApoyo = Boolean(jugadorasError || equiposError || jornadasError || torneosError);
 
