@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "check:schema": "node scripts/check-schema-sql.mjs"
+    "check:schema": "node scripts/check-schema-sql.mjs",
+    "check:security": "node scripts/check-security-sql.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
