@@ -16,8 +16,8 @@ export function validateJugadoraForm(values: JugadoraFormValues): JugadoraFormEr
     errors.nombre = "El nombre es obligatorio.";
   }
 
-  if (values.numeroCamiseta.trim() && Number.isNaN(Number(values.numeroCamiseta))) {
-    errors.numeroCamiseta = "El número debe ser un valor numérico.";
+  if (values.numeroCamiseta.trim() && !/^\d+$/.test(values.numeroCamiseta.trim())) {
+    errors.numeroCamiseta = "El número debe ser un número entero positivo.";
   }
 
   return errors;

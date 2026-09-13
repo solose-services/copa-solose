@@ -59,7 +59,7 @@ export default async function EquiposPage({
               <td className="p-2">
                 <DeleteButton
                   onDelete={eliminarEquipo.bind(null, equipo.id, torneoId)}
-                  confirmMessage={`¿Eliminar a ${equipo.nombre}? Esto no se puede deshacer.`}
+                  confirmMessage={`¿Eliminar a ${equipo.nombre}? Esto también eliminará a todas sus jugadoras registradas y no se puede deshacer.`}
                 />
               </td>
             </tr>

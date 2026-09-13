@@ -41,6 +41,14 @@ export async function crearJugadora(
     });
 
     if (error) {
+      if (error.code === "23505") {
+        return {
+          errors: {
+            numeroCamiseta: "Ese número de camiseta ya está asignado en este equipo.",
+          },
+        };
+      }
+
       return {
         errors: {},
         errorGeneral: "No se pudo registrar a la jugadora. Intenta de nuevo.",
@@ -86,6 +94,14 @@ export async function actualizarJugadora(
       .eq("id", jugadoraId);
 
     if (error) {
+      if (error.code === "23505") {
+        return {
+          errors: {
+            numeroCamiseta: "Ese número de camiseta ya está asignado en este equipo.",
+          },
+        };
+      }
+
       return { errors: {}, errorGeneral: "No se pudo guardar el cambio. Intenta de nuevo." };
     }
   } catch {
