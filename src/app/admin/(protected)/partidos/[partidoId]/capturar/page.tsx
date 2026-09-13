@@ -68,14 +68,16 @@ export default async function CapturarPartidoPage({
 
   return (
     <div className="flex flex-col gap-6">
-      {jornada?.torneo_id && (
-        <Link
-          href={`/admin/torneos/${jornada.torneo_id}/jornadas/${partido.jornada_id}/partidos`}
-          className="underline"
-        >
-          ← Volver a Partidos
-        </Link>
-      )}
+      <Link
+        href={
+          jornada?.torneo_id
+            ? `/admin/torneos/${jornada.torneo_id}/jornadas/${partido.jornada_id}/partidos`
+            : "/admin/torneos"
+        }
+        className="underline"
+      >
+        ← Volver a Partidos
+      </Link>
       <h1 className="text-xl font-semibold">
         {equipoLocal?.nombre ?? "Local"} {golesLocal} — {golesVisitante}{" "}
         {equipoVisitante?.nombre ?? "Visitante"}
