@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AlineacionForm } from "./alineacion-form";
+import { DeleteButton } from "@/components/admin/delete-button";
+import { GolForm } from "./gol-form";
+import { eliminarGol } from "./actions";
 
 export default async function CapturarPartidoPage({
   params,
@@ -56,15 +59,34 @@ export default async function CapturarPartidoPage({
     .select("jugadora_id")
     .eq("partido_id", partidoId);
 
-  const { data: goles } = await supabase
+  const { data: golesDetalle, error: golesError } = await supabase
     .from("goles")
-    .select("jugadora_id")
-    .eq("partido_id", partidoId);
+    .select("id, jugadora_id, minuto")
+    .eq("partido_id", partidoId)
+    .order("minuto");
+
+  const jugadorasQueJugaron = [
+    ...(jugadorasLocal ?? []).filter((jugadora) =>
+      (alineaciones ?? []).some((fila) => fila.jugadora_id === jugadora.id)
+    ),
+    ...(jugadorasVisitante ?? []).filter((jugadora) =>
+      (alineaciones ?? []).some((fila) => fila.jugadora_id === jugadora.id)
+    ),
+  ];
+
+  const nombrePorJugadora = new Map(
+    [...(jugadorasLocal ?? []), ...(jugadorasVisitante ?? [])].map((jugadora) => [
+      jugadora.id,
+      jugadora.nombre,
+    ])
+  );
 
   const idsLocal = new Set((jugadorasLocal ?? []).map((jugadora) => jugadora.id));
   const idsVisitante = new Set((jugadorasVisitante ?? []).map((jugadora) => jugadora.id));
-  const golesLocal = (goles ?? []).filter((gol) => idsLocal.has(gol.jugadora_id)).length;
-  const golesVisitante = (goles ?? []).filter((gol) => idsVisitante.has(gol.jugadora_id)).length;
+  const golesLocal = (golesDetalle ?? []).filter((gol) => idsLocal.has(gol.jugadora_id)).length;
+  const golesVisitante = (golesDetalle ?? []).filter((gol) =>
+    idsVisitante.has(gol.jugadora_id)
+  ).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -95,6 +117,27 @@ export default async function CapturarPartidoPage({
         jugadorasVisitante={jugadorasVisitante ?? []}
         seleccionadasIniciales={(alineaciones ?? []).map((fila) => fila.jugadora_id)}
       />
+      <section className="flex flex-col gap-3 rounded border p-4">
+        <h2 className="font-semibold">Goles</h2>
+        <GolForm partidoId={partidoId} jugadorasQueJugaron={jugadorasQueJugaron} />
+        {golesError ? (
+          <p className="text-red-600">No se pudieron cargar los goles. Intenta de nuevo.</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {(golesDetalle ?? []).map((gol) => (
+              <li key={gol.id} className="flex items-center gap-3">
+                <span>
+                  {nombrePorJugadora.get(gol.jugadora_id) ?? "Jugadora"} — min. {gol.minuto}
+                </span>
+                <DeleteButton
+                  onDelete={eliminarGol.bind(null, gol.id, partidoId)}
+                  confirmMessage="¿Eliminar este gol? Esto no se puede deshacer."
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

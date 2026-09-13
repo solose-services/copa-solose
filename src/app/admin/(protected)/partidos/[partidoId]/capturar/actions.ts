@@ -51,3 +51,65 @@ export async function guardarAlineacion(
     return { error: "No se pudo guardar la alineación. Intenta de nuevo." };
   }
 }
+
+export interface AgregarGolState {
+  errors: { jugadoraId?: string; minuto?: string };
+  errorGeneral?: string;
+}
+
+export async function agregarGol(
+  partidoId: string,
+  _prevState: AgregarGolState,
+  formData: FormData
+): Promise<AgregarGolState> {
+  const jugadoraId = String(formData.get("jugadoraId") ?? "");
+  const minutoRaw = String(formData.get("minuto") ?? "");
+
+  const errors: AgregarGolState["errors"] = {};
+  if (!jugadoraId) {
+    errors.jugadoraId = "Selecciona quién anotó.";
+  }
+  if (!/^\d+$/.test(minutoRaw.trim())) {
+    errors.minuto = "El minuto debe ser un número entero.";
+  }
+  if (Object.keys(errors).length > 0) {
+    return { errors };
+  }
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("goles").insert({
+      partido_id: partidoId,
+      jugadora_id: jugadoraId,
+      minuto: Number(minutoRaw),
+    });
+
+    if (error) {
+      return { errors: {}, errorGeneral: "No se pudo registrar el gol. Intenta de nuevo." };
+    }
+
+    revalidatePath(`/admin/partidos/${partidoId}/capturar`);
+    return { errors: {} };
+  } catch {
+    return { errors: {}, errorGeneral: "No se pudo registrar el gol. Intenta de nuevo." };
+  }
+}
+
+export async function eliminarGol(
+  golId: string,
+  partidoId: string
+): Promise<{ error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("goles").delete().eq("id", golId);
+
+    if (error) {
+      return { error: "No se pudo eliminar el gol. Intenta de nuevo." };
+    }
+
+    revalidatePath(`/admin/partidos/${partidoId}/capturar`);
+    return {};
+  } catch {
+    return { error: "No se pudo eliminar el gol. Intenta de nuevo." };
+  }
+}
