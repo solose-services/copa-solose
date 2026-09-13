@@ -30,6 +30,63 @@ export async function crearSuspension(
 
   try {
     const supabase = await createClient();
+
+    const { data: jugadora, error: jugadoraError } = await supabase
+      .from("jugadoras")
+      .select("equipo_id")
+      .eq("id", values.jugadoraId)
+      .maybeSingle();
+
+    const { data: equipo, error: equipoError } = jugadora
+      ? await supabase
+          .from("equipos")
+          .select("torneo_id")
+          .eq("id", jugadora.equipo_id)
+          .maybeSingle()
+      : { data: null, error: null };
+
+    const { data: jornadaDesde, error: jornadaDesdeError } = await supabase
+      .from("jornadas")
+      .select("torneo_id, orden")
+      .eq("id", values.jornadaDesdeId)
+      .maybeSingle();
+
+    const { data: jornadaHasta, error: jornadaHastaError } = await supabase
+      .from("jornadas")
+      .select("torneo_id, orden")
+      .eq("id", values.jornadaHastaId)
+      .maybeSingle();
+
+    if (jugadoraError || equipoError || jornadaDesdeError || jornadaHastaError) {
+      return {
+        errors: {},
+        errorGeneral: "No se pudo validar la información. Intenta de nuevo.",
+      };
+    }
+
+    if (!jugadora || !equipo || !jornadaDesde || !jornadaHasta) {
+      return {
+        errors: {},
+        errorGeneral: "No se pudo encontrar la información seleccionada. Intenta de nuevo.",
+      };
+    }
+
+    if (jornadaDesde.torneo_id !== equipo.torneo_id || jornadaHasta.torneo_id !== equipo.torneo_id) {
+      return {
+        errors: {
+          jornadaDesdeId: "Las jornadas deben ser del mismo torneo que el equipo de la jugadora.",
+        },
+      };
+    }
+
+    if (jornadaHasta.orden < jornadaDesde.orden) {
+      return {
+        errors: {
+          jornadaHastaId: "La jornada final no puede ser anterior a la jornada de inicio.",
+        },
+      };
+    }
+
     const { error } = await supabase.from("suspensiones").insert({
       jugadora_id: values.jugadoraId,
       jornada_desde_id: values.jornadaDesdeId,
