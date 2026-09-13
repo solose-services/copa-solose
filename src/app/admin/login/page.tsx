@@ -23,16 +23,22 @@ export default function LoginPage() {
 
     setCargando(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setCargando(false);
 
-    if (error) {
-      setErrorGeneral("Correo o contraseña incorrectos.");
-      return;
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        setErrorGeneral("Correo o contraseña incorrectos.");
+        return;
+      }
+
+      router.push("/admin");
+      router.refresh();
+    } catch (err) {
+      setErrorGeneral("No se pudo conectar. Intenta de nuevo.");
+    } finally {
+      setCargando(false);
     }
-
-    router.push("/admin");
-    router.refresh();
   }
 
   return (
