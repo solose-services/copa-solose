@@ -197,4 +197,18 @@ describe("calcularPosiciones", () => {
     expect(a.diferenciaGoles).toBe(1);
     expect(a.puntos).toBe(4);
   });
+
+  it("skips a partido where one of the teams isn't in equipoIds", () => {
+    const tabla = calcularPosiciones(
+      ["a", "b"],
+      [partido({ equipoLocalId: "a", equipoVisitanteId: "z", golesLocal: 5, golesVisitante: 0 })],
+      new Map()
+    );
+    const a = tabla.find((fila) => fila.equipoId === "a")!;
+    const b = tabla.find((fila) => fila.equipoId === "b")!;
+    expect(a.partidosJugados).toBe(0);
+    expect(a.puntos).toBe(0);
+    expect(a.golesFavor).toBe(0);
+    expect(b.partidosJugados).toBe(0);
+  });
 });
