@@ -44,6 +44,7 @@ export default async function SuspendidasPage({
           .from("suspensiones")
           .select("id, jugadora_id, jornada_desde_id, jornada_hasta_id, motivo")
           .in("jugadora_id", jugadoraIds)
+          .order("created_at", { ascending: false })
       : {
           data: [] as {
             id: string;
