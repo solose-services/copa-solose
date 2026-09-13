@@ -180,3 +180,51 @@ export async function eliminarTarjeta(
     return { error: "No se pudo eliminar la tarjeta. Intenta de nuevo." };
   }
 }
+
+export async function guardarMvp(
+  partidoId: string,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const mvpJugadoraId = String(formData.get("mvpJugadoraId") ?? "");
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("partidos")
+      .update({ mvp_jugadora_id: mvpJugadoraId || null })
+      .eq("id", partidoId);
+
+    if (error) {
+      return { error: "No se pudo guardar la jugadora del partido. Intenta de nuevo." };
+    }
+
+    revalidatePath(`/admin/partidos/${partidoId}/capturar`);
+    return {};
+  } catch {
+    return { error: "No se pudo guardar la jugadora del partido. Intenta de nuevo." };
+  }
+}
+
+export async function guardarIncidencias(
+  partidoId: string,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const incidencias = String(formData.get("incidencias") ?? "");
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("partidos")
+      .update({ incidencias: incidencias || null })
+      .eq("id", partidoId);
+
+    if (error) {
+      return { error: "No se pudieron guardar las incidencias. Intenta de nuevo." };
+    }
+
+    revalidatePath(`/admin/partidos/${partidoId}/capturar`);
+    return {};
+  } catch {
+    return { error: "No se pudieron guardar las incidencias. Intenta de nuevo." };
+  }
+}

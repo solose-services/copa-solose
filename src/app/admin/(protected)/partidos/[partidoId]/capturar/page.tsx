@@ -7,6 +7,8 @@ import { GolForm } from "./gol-form";
 import { eliminarGol } from "./actions";
 import { TarjetaForm } from "./tarjeta-form";
 import { eliminarTarjeta } from "./actions";
+import { MvpForm } from "./mvp-form";
+import { IncidenciasForm } from "./incidencias-form";
 
 export default async function CapturarPartidoPage({
   params,
@@ -18,7 +20,9 @@ export default async function CapturarPartidoPage({
 
   const { data: partido } = await supabase
     .from("partidos")
-    .select("id, jornada_id, equipo_local_id, equipo_visitante_id, fecha, hora")
+    .select(
+      "id, jornada_id, equipo_local_id, equipo_visitante_id, fecha, hora, mvp_jugadora_id, incidencias"
+    )
     .eq("id", partidoId)
     .maybeSingle();
 
@@ -168,6 +172,12 @@ export default async function CapturarPartidoPage({
           </ul>
         )}
       </section>
+      <MvpForm
+        partidoId={partidoId}
+        jugadorasQueJugaron={jugadorasQueJugaron}
+        mvpActual={partido.mvp_jugadora_id}
+      />
+      <IncidenciasForm partidoId={partidoId} incidenciasActuales={partido.incidencias} />
     </div>
   );
 }
