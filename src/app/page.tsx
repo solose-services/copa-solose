@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { Logo } from "@/components/ui/logo";
 
 export default async function PrincipalPage() {
   const supabase = await createClient();
@@ -18,7 +19,9 @@ export default async function PrincipalPage() {
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
-      <h1 className="text-2xl font-bold">Copa Solose</h1>
+      <h1>
+        <Logo />
+      </h1>
 
       <section className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold">Avisos</h2>
