@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { Logo } from "@/components/ui/logo";
+import { TorneoNav } from "@/components/public/torneo-nav";
 
 export default async function TorneoLayout({
   children,
@@ -19,35 +21,30 @@ export default async function TorneoLayout({
     .maybeSingle();
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
-      <header className="flex flex-col gap-2 border-b pb-4">
+    <div className="mx-auto flex max-w-[1160px] flex-col">
+      <header
+        className="sticky top-0 z-10 flex flex-col gap-3 border-b border-linea px-4 pb-3"
+        style={{
+          paddingTop: "calc(.55rem + env(safe-area-inset-top))",
+          background: "rgba(244,237,224,.94)",
+          backdropFilter: "saturate(1.4) blur(8px)",
+        }}
+      >
         <div className="flex items-center justify-between">
-          <span className="text-lg font-semibold">{torneo?.nombre ?? "Torneo"}</span>
-          <Link href="/" className="text-sm underline">
+          <Logo />
+          <Link
+            href="/"
+            className="font-mono text-[.68rem] uppercase tracking-wider text-tinta-3 underline"
+          >
             Cambiar torneo
           </Link>
         </div>
-        <nav className="flex gap-4">
-          <Link href={`/torneos/${torneoId}/calendario`} className="underline">
-            Calendario
-          </Link>
-          <Link href={`/torneos/${torneoId}/posiciones`} className="underline">
-            Posiciones
-          </Link>
-          <Link href={`/torneos/${torneoId}/goleadoras`} className="underline">
-            Goleadoras
-          </Link>
-        </nav>
-        <nav className="flex gap-4 text-sm text-gray-600">
-          <Link href={`/torneos/${torneoId}/suspendidas`} className="underline">
-            Suspendidas
-          </Link>
-          <Link href={`/torneos/${torneoId}/reglamento`} className="underline">
-            Reglamento
-          </Link>
-        </nav>
+        <p className="font-mono text-[.68rem] uppercase tracking-wider text-tinta-3">
+          {torneo?.nombre ?? "Torneo"}
+        </p>
+        <TorneoNav torneoId={torneoId} />
       </header>
-      {children}
+      <main className="flex flex-col gap-6 p-4">{children}</main>
     </div>
   );
 }
