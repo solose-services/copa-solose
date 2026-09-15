@@ -44,6 +44,9 @@ supabase/.temp
 # git worktrees
 /.worktrees
 
+# superpowers scratch (sdd ledgers, brainstorm sessions)
+/.superpowers
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
