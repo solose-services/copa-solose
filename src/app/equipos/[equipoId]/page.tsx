@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { NombreJugadora } from "@/components/public/nombre-jugadora";
+import { Avatar } from "@/components/ui/avatar";
 
 export default async function FichaEquipoPage({
   params,
@@ -23,14 +24,19 @@ export default async function FichaEquipoPage({
   if (equipoError || !equipo) {
     return (
       <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-        <p className="text-red-600">No se pudo cargar la información del equipo. Intenta de nuevo.</p>
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
+          No se pudo cargar la información del equipo. Intenta de nuevo.
+        </p>
       </div>
     );
   }
 
   const { data: jugadoras, error: jugadorasError } = await supabase
     .from("jugadoras")
-    .select("id, nombre, numero_camiseta")
+    .select("id, nombre, foto_url, numero_camiseta")
     .eq("equipo_id", equipoId)
     .order("nombre");
 
@@ -117,58 +123,56 @@ export default async function FichaEquipoPage({
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
       <div className="flex items-center gap-4">
-        {equipo.logo_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={equipo.logo_url}
-            alt={equipo.nombre}
-            className="h-16 w-16 rounded object-cover"
-          />
-        )}
-        <h1 className="text-xl font-semibold">{equipo.nombre}</h1>
+        <Avatar src={equipo.logo_url} nombre={equipo.nombre} size={64} />
+        <h1 className="font-tit text-xl uppercase tracking-tight">{equipo.nombre}</h1>
       </div>
 
       {hayError ? (
-        <p className="text-red-600">
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
           No se pudo cargar la información del equipo. Intenta de nuevo.
         </p>
       ) : (
         <>
           <dl className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <dt className="text-sm text-gray-600">PJ</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PJ</dt>
               <dd className="text-lg font-semibold">{partidosJugados}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">PG</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PG</dt>
               <dd className="text-lg font-semibold">{ganados}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">PE</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PE</dt>
               <dd className="text-lg font-semibold">{empatados}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">PP</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PP</dt>
               <dd className="text-lg font-semibold">{perdidos}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">Pts</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">Pts</dt>
               <dd className="text-lg font-semibold">{puntos}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">GF</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">GF</dt>
               <dd className="text-lg font-semibold">{golesFavor}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">GC</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">GC</dt>
               <dd className="text-lg font-semibold">{golesContra}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">DG</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">DG</dt>
               <dd className="text-lg font-semibold">{diferenciaGoles}</dd>
             </div>
             <div>
-              <dt className="text-sm text-gray-600">TA / TR</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                TA / TR
+              </dt>
               <dd className="text-lg font-semibold">
                 {tarjetasAmarillas} / {tarjetasRojas}
               </dd>
@@ -176,12 +180,22 @@ export default async function FichaEquipoPage({
           </dl>
 
           <section className="flex flex-col gap-2">
-            <h2 className="font-semibold">Jugadoras</h2>
-            <ul className="flex flex-col gap-1">
+            <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
+              <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
+                Jugadoras
+              </h2>
+            </div>
+            <ul className="mt-1 flex flex-col gap-1.5">
               {(jugadoras ?? []).map((jugadora) => (
-                <li key={jugadora.id}>
-                  <NombreJugadora id={jugadora.id} nombre={jugadora.nombre} />
-                  {jugadora.numero_camiseta != null && ` (#${jugadora.numero_camiseta})`}
+                <li key={jugadora.id} className="flex items-center gap-2 text-sm">
+                  <NombreJugadora
+                    id={jugadora.id}
+                    nombre={jugadora.nombre}
+                    fotoUrl={jugadora.foto_url}
+                  />
+                  {jugadora.numero_camiseta != null && (
+                    <span className="font-mono text-tinta-3">#{jugadora.numero_camiseta}</span>
+                  )}
                 </li>
               ))}
             </ul>
