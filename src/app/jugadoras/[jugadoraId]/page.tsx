@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { NombreEquipo } from "@/components/public/nombre-equipo";
+import { Avatar } from "@/components/ui/avatar";
 
 export default async function FichaJugadoraPage({
   params,
@@ -23,14 +24,19 @@ export default async function FichaJugadoraPage({
   if (jugadoraError || !jugadora) {
     return (
       <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-        <p className="text-red-600">No se pudo cargar la información de la jugadora. Intenta de nuevo.</p>
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
+          No se pudo cargar la información de la jugadora. Intenta de nuevo.
+        </p>
       </div>
     );
   }
 
   const { data: equipo, error: equipoError } = await supabase
     .from("equipos")
-    .select("id, nombre")
+    .select("id, nombre, logo_url")
     .eq("id", jugadora.equipo_id)
     .maybeSingle();
 
@@ -115,54 +121,58 @@ export default async function FichaJugadoraPage({
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
       <div className="flex items-center gap-4">
-        {jugadora.foto_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={jugadora.foto_url}
-            alt={jugadora.nombre}
-            className="h-16 w-16 rounded-full object-cover"
-          />
-        )}
+        <Avatar src={jugadora.foto_url} nombre={jugadora.nombre} size={64} />
         <div>
-          <h1 className="text-xl font-semibold">{jugadora.nombre}</h1>
-          {equipo && <NombreEquipo id={equipo.id} nombre={equipo.nombre} />}
+          <h1 className="font-tit text-xl uppercase tracking-tight">{jugadora.nombre}</h1>
+          {equipo && (
+            <NombreEquipo id={equipo.id} nombre={equipo.nombre} logoUrl={equipo.logo_url} />
+          )}
         </div>
       </div>
 
       {hayError ? (
-        <p className="text-red-600">
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
           No se pudo cargar la información de la jugadora. Intenta de nuevo.
         </p>
       ) : (
         <dl className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <dt className="text-sm text-gray-600">PJ</dt>
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PJ</dt>
             <dd className="text-lg font-semibold">{partidoIds.length}</dd>
           </div>
           <div>
-            <dt className="text-sm text-gray-600">PG</dt>
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PG</dt>
             <dd className="text-lg font-semibold">{ganados}</dd>
           </div>
           <div>
-            <dt className="text-sm text-gray-600">PE</dt>
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PE</dt>
             <dd className="text-lg font-semibold">{empatados}</dd>
           </div>
           <div>
-            <dt className="text-sm text-gray-600">PP</dt>
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PP</dt>
             <dd className="text-lg font-semibold">{perdidos}</dd>
           </div>
           <div>
-            <dt className="text-sm text-gray-600">Goles</dt>
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+              Goles
+            </dt>
             <dd className="text-lg font-semibold">{totalGoles}</dd>
           </div>
           <div>
-            <dt className="text-sm text-gray-600">TA / TR</dt>
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+              TA / TR
+            </dt>
             <dd className="text-lg font-semibold">
               {totalAmarillas} / {totalRojas}
             </dd>
           </div>
           <div>
-            <dt className="text-sm text-gray-600">Veces MVP</dt>
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+              Veces MVP
+            </dt>
             <dd className="text-lg font-semibold">{vecesMvp ?? 0}</dd>
           </div>
         </dl>
