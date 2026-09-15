@@ -15,6 +15,7 @@ export function Avatar({ src, nombre, size = 24 }: AvatarProps) {
   if (!src || fallo) {
     return (
       <span
+        aria-hidden="true"
         className="inline-flex flex-none items-center justify-center rounded-full font-mono font-medium"
         style={{
           width: size,

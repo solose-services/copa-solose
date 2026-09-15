@@ -31,18 +31,20 @@
   --radius-lg: 12px;
 }
 
-body {
-  background: var(--crema);
-  color: var(--tinta);
-  font-family: var(--font-cuerpo), ui-sans-serif, system-ui, sans-serif;
-  font-size: 16px;
-  line-height: 1.45;
-  -webkit-font-smoothing: antialiased;
-}
+@layer base {
+  body {
+    background: var(--crema);
+    color: var(--tinta);
+    font-family: var(--font-cuerpo), ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
 
-h1, h2, h3 {
-  font-family: var(--font-tit), ui-sans-serif, system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: .02em;
-  margin: 0;
+  h1, h2, h3 {
+    font-family: var(--font-tit), ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: .02em;
+    margin: 0;
+  }
 }
