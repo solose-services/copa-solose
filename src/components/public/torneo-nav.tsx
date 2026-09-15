@@ -18,7 +18,7 @@ function EnlaceNav({
       className={
         activo
           ? "border-b-2 border-azul pb-1 font-mono text-[.68rem] uppercase tracking-wider text-azul"
-          : "border-b-2 border-transparent pb-1 font-mono text-[.68rem] uppercase tracking-wider text-tinta-3 hover:text-tinta-2"
+          : "border-b-2 border-transparent pb-1 font-mono text-[.68rem] uppercase tracking-wider text-tinta-2 hover:text-tinta-2"
       }
     >
       {etiqueta}

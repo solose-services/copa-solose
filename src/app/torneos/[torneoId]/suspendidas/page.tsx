@@ -80,25 +80,25 @@ export default async function SuspendidasPage({
           No se pudieron cargar las suspensiones. Intenta de nuevo.
         </p>
       ) : (suspensiones ?? []).length === 0 ? (
-        <p className="text-sm text-tinta-3">No hay jugadoras suspendidas por el momento.</p>
+        <p className="text-sm text-tinta-2">No hay jugadoras suspendidas por el momento.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Jugadora
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Equipo
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Desde
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Hasta
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Motivo
                 </th>
               </tr>

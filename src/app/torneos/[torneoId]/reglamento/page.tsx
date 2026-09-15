@@ -36,7 +36,7 @@ export default async function ReglamentoPublicoPage({
           >
             Abrir el reglamento en una pestaña nueva
           </a>
-          <p className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+          <p className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
             Si no ves el PDF abajo, ábrelo en una pestaña nueva con el enlace de arriba.
           </p>
           <iframe
@@ -46,7 +46,7 @@ export default async function ReglamentoPublicoPage({
           />
         </div>
       ) : (
-        <p className="text-sm text-tinta-3">
+        <p className="text-sm text-tinta-2">
           Todavía no se ha publicado el reglamento de este torneo.
         </p>
       )}

@@ -147,28 +147,28 @@ export default async function PosicionesPage({
           <table className="w-full text-left">
             <thead>
               <tr>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Equipo
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   PJ
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Pts
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   GF
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   GC
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   DG
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   TA
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   TR
                 </th>
               </tr>

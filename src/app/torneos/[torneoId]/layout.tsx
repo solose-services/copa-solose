@@ -34,12 +34,12 @@ export default async function TorneoLayout({
           <Logo />
           <Link
             href="/"
-            className="font-mono text-[.68rem] uppercase tracking-wider text-tinta-3 underline"
+            className="font-mono text-[.68rem] uppercase tracking-wider text-tinta-2 underline"
           >
             Cambiar torneo
           </Link>
         </div>
-        <p className="font-mono text-[.68rem] uppercase tracking-wider text-tinta-3">
+        <p className="font-mono text-[.68rem] uppercase tracking-wider text-tinta-2">
           {torneo?.nombre ?? "Torneo"}
         </p>
         <TorneoNav torneoId={torneoId} />

@@ -138,39 +138,39 @@ export default async function FichaEquipoPage({
         <>
           <dl className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PJ</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PJ</dt>
               <dd className="text-lg font-semibold">{partidosJugados}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PG</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PG</dt>
               <dd className="text-lg font-semibold">{ganados}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PE</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PE</dt>
               <dd className="text-lg font-semibold">{empatados}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PP</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PP</dt>
               <dd className="text-lg font-semibold">{perdidos}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">Pts</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">Pts</dt>
               <dd className="text-lg font-semibold">{puntos}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">GF</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">GF</dt>
               <dd className="text-lg font-semibold">{golesFavor}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">GC</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">GC</dt>
               <dd className="text-lg font-semibold">{golesContra}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">DG</dt>
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">DG</dt>
               <dd className="text-lg font-semibold">{diferenciaGoles}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+              <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                 TA / TR
               </dt>
               <dd className="text-lg font-semibold">

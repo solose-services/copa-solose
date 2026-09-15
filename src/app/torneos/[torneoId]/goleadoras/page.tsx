@@ -70,19 +70,19 @@ export default async function GoleadorasPage({
           No se pudieron cargar las goleadoras. Intenta de nuevo.
         </p>
       ) : tabla.length === 0 ? (
-        <p className="text-sm text-tinta-3">Todavía no hay goles registrados.</p>
+        <p className="text-sm text-tinta-2">Todavía no hay goles registrados.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Jugadora
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Equipo
                 </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Goles
                 </th>
               </tr>

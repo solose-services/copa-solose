@@ -140,29 +140,29 @@ export default async function FichaJugadoraPage({
       ) : (
         <dl className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PJ</dt>
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PJ</dt>
             <dd className="text-lg font-semibold">{partidoIds.length}</dd>
           </div>
           <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PG</dt>
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PG</dt>
             <dd className="text-lg font-semibold">{ganados}</dd>
           </div>
           <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PE</dt>
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PE</dt>
             <dd className="text-lg font-semibold">{empatados}</dd>
           </div>
           <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">PP</dt>
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PP</dt>
             <dd className="text-lg font-semibold">{perdidos}</dd>
           </div>
           <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
               Goles
             </dt>
             <dd className="text-lg font-semibold">{totalGoles}</dd>
           </div>
           <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
               TA / TR
             </dt>
             <dd className="text-lg font-semibold">
@@ -170,7 +170,7 @@ export default async function FichaJugadoraPage({
             </dd>
           </div>
           <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
               Veces MVP
             </dt>
             <dd className="text-lg font-semibold">{vecesMvp ?? 0}</dd>

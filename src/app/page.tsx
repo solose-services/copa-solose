@@ -35,7 +35,7 @@ export default async function PrincipalPage() {
             No se pudieron cargar los avisos. Intenta de nuevo.
           </p>
         ) : (avisos ?? []).length === 0 ? (
-          <p className="text-sm text-tinta-3">No hay avisos por el momento.</p>
+          <p className="text-sm text-tinta-2">No hay avisos por el momento.</p>
         ) : (
           <ul className="flex flex-col gap-3">
             {(avisos ?? []).map((aviso) => (
@@ -66,7 +66,7 @@ export default async function PrincipalPage() {
             No se pudieron cargar los torneos. Intenta de nuevo.
           </p>
         ) : (torneos ?? []).length === 0 ? (
-          <p className="text-sm text-tinta-3">Todavía no hay torneos activos.</p>
+          <p className="text-sm text-tinta-2">Todavía no hay torneos activos.</p>
         ) : (
           <div className="flex flex-wrap gap-4">
             {(torneos ?? []).map((torneo) => (
