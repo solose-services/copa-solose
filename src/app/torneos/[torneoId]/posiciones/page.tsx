@@ -12,12 +12,14 @@ export default async function PosicionesPage({
 
   const { data: equipos, error: equiposError } = await supabase
     .from("equipos")
-    .select("id, nombre, orden_desempate_manual")
+    .select("id, nombre, logo_url, orden_desempate_manual")
     .eq("torneo_id", torneoId)
     .order("nombre");
 
   const equipoIds = (equipos ?? []).map((equipo) => equipo.id);
-  const nombrePorEquipo = new Map((equipos ?? []).map((equipo) => [equipo.id, equipo.nombre]));
+  const equipoInfoPorId = new Map(
+    (equipos ?? []).map((equipo) => [equipo.id, { nombre: equipo.nombre, logoUrl: equipo.logo_url }])
+  );
   const ordenDesempateManualPorEquipo = new Map(
     (equipos ?? []).map((equipo) => [equipo.id, equipo.orden_desempate_manual])
   );
@@ -130,43 +132,69 @@ export default async function PosicionesPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">Posiciones</h1>
+      <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
+        <h1 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">Posiciones</h1>
+      </div>
       {hayError ? (
-        <p className="text-red-600">No se pudieron cargar las posiciones. Intenta de nuevo.</p>
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
+          No se pudieron cargar las posiciones. Intenta de nuevo.
+        </p>
       ) : (
-        <table className="w-full text-left">
-          <thead>
-            <tr>
-              <th className="p-2">Equipo</th>
-              <th className="p-2">PJ</th>
-              <th className="p-2">Pts</th>
-              <th className="p-2">GF</th>
-              <th className="p-2">GC</th>
-              <th className="p-2">DG</th>
-              <th className="p-2">TA</th>
-              <th className="p-2">TR</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tabla.map((fila) => (
-              <tr key={fila.equipoId} className="border-t">
-                <td className="p-2">
-                  <NombreEquipo
-                    id={fila.equipoId}
-                    nombre={nombrePorEquipo.get(fila.equipoId) ?? "Equipo"}
-                  />
-                </td>
-                <td className="p-2">{fila.partidosJugados}</td>
-                <td className="p-2">{fila.puntos}</td>
-                <td className="p-2">{fila.golesFavor}</td>
-                <td className="p-2">{fila.golesContra}</td>
-                <td className="p-2">{fila.diferenciaGoles}</td>
-                <td className="p-2">{fila.tarjetasAmarillas}</td>
-                <td className="p-2">{fila.tarjetasRojas}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                  Equipo
+                </th>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                  PJ
+                </th>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                  Pts
+                </th>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                  GF
+                </th>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                  GC
+                </th>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                  DG
+                </th>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                  TA
+                </th>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                  TR
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {tabla.map((fila) => (
+                <tr key={fila.equipoId} className="border-b border-linea-2">
+                  <td className="p-2 text-sm">
+                    <NombreEquipo
+                      id={fila.equipoId}
+                      nombre={equipoInfoPorId.get(fila.equipoId)?.nombre ?? "Equipo"}
+                      logoUrl={equipoInfoPorId.get(fila.equipoId)?.logoUrl ?? null}
+                    />
+                  </td>
+                  <td className="p-2 text-sm">{fila.partidosJugados}</td>
+                  <td className="p-2 text-sm font-medium">{fila.puntos}</td>
+                  <td className="p-2 text-sm">{fila.golesFavor}</td>
+                  <td className="p-2 text-sm">{fila.golesContra}</td>
+                  <td className="p-2 text-sm">{fila.diferenciaGoles}</td>
+                  <td className="p-2 text-sm">{fila.tarjetasAmarillas}</td>
+                  <td className="p-2 text-sm">{fila.tarjetasRojas}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
