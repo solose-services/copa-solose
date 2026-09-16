@@ -29,29 +29,16 @@ function EnlaceNav({
 export function TorneoNav({ torneoId }: { torneoId: string }) {
   const pathname = usePathname();
 
-  const principales = [
-    { href: `/torneos/${torneoId}/calendario`, etiqueta: "Calendario" },
-    { href: `/torneos/${torneoId}/posiciones`, etiqueta: "Posiciones" },
-    { href: `/torneos/${torneoId}/goleadoras`, etiqueta: "Goleadoras" },
-  ];
-
   const secundarios = [
     { href: `/torneos/${torneoId}/suspendidas`, etiqueta: "Suspendidas" },
     { href: `/torneos/${torneoId}/reglamento`, etiqueta: "Reglamento" },
   ];
 
   return (
-    <>
-      <nav className="flex gap-5 overflow-x-auto">
-        {principales.map((enlace) => (
-          <EnlaceNav key={enlace.href} {...enlace} activo={pathname === enlace.href} />
-        ))}
-      </nav>
-      <nav className="flex gap-5 overflow-x-auto">
-        {secundarios.map((enlace) => (
-          <EnlaceNav key={enlace.href} {...enlace} activo={pathname === enlace.href} />
-        ))}
-      </nav>
-    </>
+    <nav className="flex gap-5 overflow-x-auto">
+      {secundarios.map((enlace) => (
+        <EnlaceNav key={enlace.href} {...enlace} activo={pathname === enlace.href} />
+      ))}
+    </nav>
   );
 }
