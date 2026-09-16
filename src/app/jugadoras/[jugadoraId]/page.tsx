@@ -36,7 +36,7 @@ export default async function FichaJugadoraPage({
 
   const { data: equipo, error: equipoError } = await supabase
     .from("equipos")
-    .select("id, nombre, logo_url")
+    .select("id, nombre, logo_url, torneo_id")
     .eq("id", jugadora.equipo_id)
     .maybeSingle();
 
@@ -108,6 +108,45 @@ export default async function FichaJugadoraPage({
     (tarjeta) => tarjeta.jugadora_id === jugadoraId && tarjeta.tipo === "roja"
   ).length;
 
+  let contextoGoleo: string | null = null;
+  let contextoGoleoError = false;
+  if (equipo?.torneo_id && totalGoles > 0) {
+    const { data: equiposTorneo, error: equiposTorneoError } = await supabase
+      .from("equipos")
+      .select("id")
+      .eq("torneo_id", equipo.torneo_id);
+    const equipoIdsTorneo = (equiposTorneo ?? []).map((fila) => fila.id);
+
+    const { data: jugadorasTorneo, error: jugadorasTorneoError } =
+      equipoIdsTorneo.length > 0
+        ? await supabase.from("jugadoras").select("id").in("equipo_id", equipoIdsTorneo)
+        : { data: [] as { id: string }[], error: null };
+    const jugadoraIdsTorneo = (jugadorasTorneo ?? []).map((fila) => fila.id);
+
+    const { data: golesTorneo, error: golesTorneoError } =
+      jugadoraIdsTorneo.length > 0
+        ? await supabase.from("goles").select("jugadora_id").in("jugadora_id", jugadoraIdsTorneo)
+        : { data: [] as { jugadora_id: string }[], error: null };
+
+    contextoGoleoError = Boolean(equiposTorneoError || jugadorasTorneoError || golesTorneoError);
+
+    const golesPorJugadoraTorneo = new Map<string, number>();
+    for (const gol of golesTorneo ?? []) {
+      golesPorJugadoraTorneo.set(
+        gol.jugadora_id,
+        (golesPorJugadoraTorneo.get(gol.jugadora_id) ?? 0) + 1
+      );
+    }
+
+    const maxGoles = Math.max(0, ...golesPorJugadoraTorneo.values());
+    if (totalGoles >= maxGoles) {
+      contextoGoleo = "Líder de goleo";
+    } else {
+      const diferencia = maxGoles - totalGoles;
+      contextoGoleo = `A ${diferencia} gol${diferencia === 1 ? "" : "es"} de la líder`;
+    }
+  }
+
   const hayError = Boolean(
     equipoError ||
       companerasError ||
@@ -115,67 +154,94 @@ export default async function FichaJugadoraPage({
       partidosError ||
       golesError ||
       tarjetasError ||
-      mvpError
+      mvpError ||
+      contextoGoleoError
   );
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <div className="flex items-center gap-4">
-        <Avatar src={jugadora.foto_url} nombre={jugadora.nombre} size={64} />
-        <div>
-          <h1 className="font-tit text-xl uppercase tracking-tight">{jugadora.nombre}</h1>
-          {equipo && (
-            <NombreEquipo id={equipo.id} nombre={equipo.nombre} logoUrl={equipo.logo_url} />
-          )}
-        </div>
-      </div>
-
+    <div className="mx-auto flex max-w-2xl flex-col">
       {hayError ? (
-        <p
-          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
-        >
-          No se pudo cargar la información de la jugadora. Intenta de nuevo.
-        </p>
+        <div className="p-6">
+          <p
+            className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          >
+            No se pudo cargar la información de la jugadora. Intenta de nuevo.
+          </p>
+        </div>
       ) : (
-        <dl className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PJ</dt>
-            <dd className="text-lg font-semibold">{partidoIds.length}</dd>
+        <>
+          <div className="flex items-center gap-4 px-6 py-8" style={{ background: "var(--tinta)" }}>
+            <Avatar src={jugadora.foto_url} nombre={jugadora.nombre} size={56} />
+            <div>
+              <h1
+                className="font-tit text-xl uppercase tracking-tight"
+                style={{ color: "var(--crema)" }}
+              >
+                {jugadora.nombre}
+              </h1>
+              {equipo && (
+                <NombreEquipo id={equipo.id} nombre={equipo.nombre} logoUrl={equipo.logo_url} />
+              )}
+            </div>
           </div>
-          <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PG</dt>
-            <dd className="text-lg font-semibold">{ganados}</dd>
+
+          <div className="flex flex-col gap-6 p-6">
+            {contextoGoleo && (
+              <p
+                className="rounded-sm border-l-2 border-azul px-3 py-2.5 text-sm"
+                style={{ background: "rgba(27,63,209,.07)" }}
+              >
+                {contextoGoleo} · {totalGoles} gol{totalGoles === 1 ? "" : "es"} en el torneo
+              </p>
+            )}
+
+            <dl className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
+              <div>
+                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                  Jugados
+                </dt>
+                <dd className="text-2xl font-semibold">{partidoIds.length}</dd>
+              </div>
+              <div>
+                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                  G-E-P
+                </dt>
+                <dd className="text-2xl font-semibold">
+                  {ganados}-{empatados}-{perdidos}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                  Goles
+                </dt>
+                <dd className="text-2xl font-semibold">{totalGoles}</dd>
+              </div>
+              <div>
+                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                  MVP
+                </dt>
+                <dd className="text-2xl font-semibold">{vecesMvp ?? 0}</dd>
+              </div>
+            </dl>
+            <div className="flex gap-6">
+              <span className="text-sm">
+                <span
+                  className="mr-1.5 inline-block h-3 w-2.5 rounded-[2px]"
+                  style={{ background: "#B26A12" }}
+                />
+                {totalAmarillas} amarillas
+              </span>
+              <span className="text-sm">
+                <span
+                  className="mr-1.5 inline-block h-3 w-2.5 rounded-[2px]"
+                  style={{ background: "var(--vino)" }}
+                />
+                {totalRojas} rojas
+              </span>
+            </div>
           </div>
-          <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PE</dt>
-            <dd className="text-lg font-semibold">{empatados}</dd>
-          </div>
-          <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">PP</dt>
-            <dd className="text-lg font-semibold">{perdidos}</dd>
-          </div>
-          <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-              Goles
-            </dt>
-            <dd className="text-lg font-semibold">{totalGoles}</dd>
-          </div>
-          <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-              TA / TR
-            </dt>
-            <dd className="text-lg font-semibold">
-              {totalAmarillas} / {totalRojas}
-            </dd>
-          </div>
-          <div>
-            <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-              Veces MVP
-            </dt>
-            <dd className="text-lg font-semibold">{vecesMvp ?? 0}</dd>
-          </div>
-        </dl>
+        </>
       )}
     </div>
   );
