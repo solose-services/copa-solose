@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NombreJugadora } from "@/components/public/nombre-jugadora";
 import { NombreEquipo } from "@/components/public/nombre-equipo";
+import { formatearEtiquetaJornada } from "@/lib/jornada";
 
 export default async function SuspendidasPage({
   params,
@@ -132,10 +133,16 @@ export default async function SuspendidasPage({
                       )}
                     </td>
                     <td className="p-2 text-sm">
-                      {etiquetaPorJornada.get(suspension.jornada_desde_id) ?? "—"}
+                      {(() => {
+                        const etiqueta = etiquetaPorJornada.get(suspension.jornada_desde_id);
+                        return etiqueta ? formatearEtiquetaJornada(etiqueta) : "—";
+                      })()}
                     </td>
                     <td className="p-2 text-sm">
-                      {etiquetaPorJornada.get(suspension.jornada_hasta_id) ?? "—"}
+                      {(() => {
+                        const etiqueta = etiquetaPorJornada.get(suspension.jornada_hasta_id);
+                        return etiqueta ? formatearEtiquetaJornada(etiqueta) : "—";
+                      })()}
                     </td>
                     <td className="p-2 text-sm">{suspension.motivo ?? "—"}</td>
                   </tr>

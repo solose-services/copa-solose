@@ -10,6 +10,7 @@ import { TarjetaForm } from "./tarjeta-form";
 import { eliminarTarjeta } from "./actions";
 import { MvpForm } from "./mvp-form";
 import { IncidenciasForm } from "./incidencias-form";
+import { FechaHoraForm } from "./fecha-hora-form";
 
 export default async function CapturarPartidoPage({
   params,
@@ -156,7 +157,9 @@ export default async function CapturarPartidoPage({
       </h1>
       <p className="font-mono text-[.68rem] uppercase tracking-wider text-tinta-2">
         {jornada?.etiqueta ?? "Jornada"} · {partido.fecha ?? "Sin fecha"}
+        {partido.hora ? ` · ${partido.hora.slice(0, 5)}` : ""}
       </p>
+      <FechaHoraForm partidoId={partidoId} fechaActual={partido.fecha} horaActual={partido.hora} />
       {hayErrorAlineacion ? (
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"

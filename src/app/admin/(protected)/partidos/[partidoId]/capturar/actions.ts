@@ -205,6 +205,35 @@ export async function guardarMvp(
   }
 }
 
+export async function guardarFechaHora(
+  partidoId: string,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const fecha = String(formData.get("fecha") ?? "");
+  const hora = String(formData.get("hora") ?? "");
+
+  if (!fecha) {
+    return { error: "La fecha es obligatoria." };
+  }
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("partidos")
+      .update({ fecha, hora: hora || null })
+      .eq("id", partidoId);
+
+    if (error) {
+      return { error: "No se pudo guardar la fecha y el horario. Intenta de nuevo." };
+    }
+
+    revalidatePath(`/admin/partidos/${partidoId}/capturar`);
+    return {};
+  } catch {
+    return { error: "No se pudo guardar la fecha y el horario. Intenta de nuevo." };
+  }
+}
+
 export async function guardarIncidencias(
   partidoId: string,
   formData: FormData

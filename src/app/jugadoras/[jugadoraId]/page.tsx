@@ -1,7 +1,11 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { NombreEquipo } from "@/components/public/nombre-equipo";
 import { Avatar } from "@/components/ui/avatar";
+import { BackButton } from "@/components/public/back-button";
+import { BottomNav } from "@/components/public/bottom-nav";
+import { formatearEtiquetaJornada } from "@/lib/jornada";
 
 export default async function FichaJugadoraPage({
   params,
@@ -23,13 +27,17 @@ export default async function FichaJugadoraPage({
 
   if (jugadoraError || !jugadora) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-        <p
-          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
-        >
-          No se pudo cargar la información de la jugadora. Intenta de nuevo.
-        </p>
+      <div className="mx-auto flex max-w-2xl flex-col pb-20">
+        <div className="flex flex-col gap-6 p-6">
+          <BackButton />
+          <p
+            className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          >
+            No se pudo cargar la información de la jugadora. Intenta de nuevo.
+          </p>
+        </div>
+        <BottomNav torneoId={null} />
       </div>
     );
   }
@@ -56,8 +64,20 @@ export default async function FichaJugadoraPage({
 
   const { data: partidos, error: partidosError } =
     partidoIds.length > 0
-      ? await supabase.from("partidos").select("id").in("id", partidoIds)
-      : { data: [] as { id: string }[], error: null };
+      ? await supabase
+          .from("partidos")
+          .select("id, jornada_id, equipo_local_id, equipo_visitante_id, fecha")
+          .in("id", partidoIds)
+      : {
+          data: [] as {
+            id: string;
+            jornada_id: string;
+            equipo_local_id: string;
+            equipo_visitante_id: string;
+            fecha: string | null;
+          }[],
+          error: null,
+        };
 
   const { data: goles, error: golesError } =
     partidoIds.length > 0
@@ -99,6 +119,46 @@ export default async function FichaJugadoraPage({
     else if (propios < rivales) perdidos += 1;
     else empatados += 1;
   }
+
+  const jornadaIdsDePartidos = [...new Set((partidos ?? []).map((partido) => partido.jornada_id))];
+  const { data: jornadasDePartidos, error: jornadasDePartidosError } =
+    jornadaIdsDePartidos.length > 0
+      ? await supabase.from("jornadas").select("id, etiqueta, orden").in("id", jornadaIdsDePartidos)
+      : { data: [] as { id: string; etiqueta: string; orden: number }[], error: null };
+
+  const jornadaPorId = new Map((jornadasDePartidos ?? []).map((jornada) => [jornada.id, jornada]));
+
+  const rivalIdPorPartido = new Map(
+    (partidos ?? []).map((partido) => [
+      partido.id,
+      partido.equipo_local_id === jugadora.equipo_id
+        ? partido.equipo_visitante_id
+        : partido.equipo_local_id,
+    ])
+  );
+  const rivalIds = [...new Set(rivalIdPorPartido.values())];
+  const { data: equiposRivales, error: equiposRivalesError } =
+    rivalIds.length > 0
+      ? await supabase.from("equipos").select("id, nombre").in("id", rivalIds)
+      : { data: [] as { id: string; nombre: string }[], error: null };
+
+  const nombreRivalPorId = new Map((equiposRivales ?? []).map((equipo) => [equipo.id, equipo.nombre]));
+
+  const misGolesPorPartido = new Map<string, number>();
+  for (const gol of goles ?? []) {
+    if (gol.jugadora_id !== jugadoraId) continue;
+    misGolesPorPartido.set(gol.partido_id, (misGolesPorPartido.get(gol.partido_id) ?? 0) + 1);
+  }
+
+  const ultimosPartidos = (partidos ?? [])
+    .map((partido) => ({
+      partidoId: partido.id,
+      jornada: jornadaPorId.get(partido.jornada_id),
+      rivalNombre: nombreRivalPorId.get(rivalIdPorPartido.get(partido.id) ?? "") ?? "Rival",
+      marcador: golesPorPartido.get(partido.id) ?? { propios: 0, rivales: 0 },
+      misGoles: misGolesPorPartido.get(partido.id) ?? 0,
+    }))
+    .sort((a, b) => (b.jornada?.orden ?? 0) - (a.jornada?.orden ?? 0));
 
   const totalGoles = (goles ?? []).filter((gol) => gol.jugadora_id === jugadoraId).length;
   const totalAmarillas = (tarjetas ?? []).filter(
@@ -155,13 +215,16 @@ export default async function FichaJugadoraPage({
       golesError ||
       tarjetasError ||
       mvpError ||
-      contextoGoleoError
+      contextoGoleoError ||
+      jornadasDePartidosError ||
+      equiposRivalesError
   );
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col">
+    <div className="mx-auto flex max-w-2xl flex-col pb-20">
       {hayError ? (
-        <div className="p-6">
+        <div className="flex flex-col gap-6 p-6">
+          <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
             style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
@@ -172,15 +235,18 @@ export default async function FichaJugadoraPage({
       ) : (
         <>
           <div
-            className="flex items-center gap-4 px-6 py-8"
+            className="flex flex-col gap-4 px-6 py-8"
             style={{ background: "var(--tinta)", color: "var(--crema)" }}
           >
-            <Avatar src={jugadora.foto_url} nombre={jugadora.nombre} size={56} />
-            <div>
-              <h1 className="font-tit text-xl uppercase tracking-tight">{jugadora.nombre}</h1>
-              {equipo && (
-                <NombreEquipo id={equipo.id} nombre={equipo.nombre} logoUrl={equipo.logo_url} />
-              )}
+            <BackButton oscuro />
+            <div className="flex items-center gap-4">
+              <Avatar src={jugadora.foto_url} nombre={jugadora.nombre} size={56} />
+              <div>
+                <h1 className="font-tit text-xl uppercase tracking-tight">{jugadora.nombre}</h1>
+                {equipo && (
+                  <NombreEquipo id={equipo.id} nombre={equipo.nombre} logoUrl={equipo.logo_url} />
+                )}
+              </div>
             </div>
           </div>
 
@@ -238,9 +304,46 @@ export default async function FichaJugadoraPage({
                 {totalRojas} rojas
               </span>
             </div>
+
+            {ultimosPartidos.length > 0 && (
+              <section className="flex flex-col gap-2">
+                <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
+                  <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
+                    Últimos partidos
+                  </h2>
+                </div>
+                <ul className="flex flex-col">
+                  {ultimosPartidos.map((partido) => (
+                    <li
+                      key={partido.partidoId}
+                      className="border-b border-linea-2 last:border-b-0"
+                    >
+                      <Link
+                        href={`/partidos/${partido.partidoId}`}
+                        className="flex items-center gap-3 py-2.5 text-sm hover:text-azul"
+                      >
+                        <span className="w-8 flex-none font-mono text-xs text-tinta-2">
+                          {partido.jornada ? formatearEtiquetaJornada(partido.jornada.etiqueta) : ""}
+                        </span>
+                        <span className="flex-1">vs {partido.rivalNombre}</span>
+                        <span className="font-mono font-medium">
+                          {partido.marcador.propios}&ndash;{partido.marcador.rivales}
+                        </span>
+                        <span className="w-16 flex-none text-right font-mono text-xs text-tinta-2">
+                          {partido.misGoles > 0
+                            ? `${partido.misGoles} gol${partido.misGoles === 1 ? "" : "es"}`
+                            : "—"}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </div>
         </>
       )}
+      <BottomNav torneoId={equipo?.torneo_id ?? null} />
     </div>
   );
 }

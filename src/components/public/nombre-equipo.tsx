@@ -11,7 +11,7 @@ export function NombreEquipo({
   logoUrl?: string | null;
 }) {
   return (
-    <Link href={`/equipos/${id}`} className="inline-flex items-center gap-1.5 underline">
+    <Link href={`/equipos/${id}`} className="inline-flex items-center gap-1.5 hover:text-azul">
       <Avatar src={logoUrl} nombre={nombre} size={20} />
       {nombre}
     </Link>

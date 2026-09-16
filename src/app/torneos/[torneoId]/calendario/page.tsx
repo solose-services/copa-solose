@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { contarMarcador } from "@/lib/marcador";
+import { formatearEtiquetaJornada, tituloJornada } from "@/lib/jornada";
+import { formatearHora, formatearFechaCorta } from "@/lib/fecha";
 import { Avatar } from "@/components/ui/avatar";
 
 export default async function CalendarioPage({
@@ -108,6 +110,19 @@ export default async function CalendarioPage({
     jornadasOrdenadas.find((jornada) => jornada.id === jornadaActualId) ??
     jornadasOrdenadas[0];
 
+  const indiceSeleccionada = jornadasOrdenadas.findIndex(
+    (jornada) => jornada.id === jornadaSeleccionada?.id
+  );
+  const jornadaAnterior = indiceSeleccionada > 0 ? jornadasOrdenadas[indiceSeleccionada - 1] : undefined;
+
+  function fechaMasTempranaDeJornada(jornadaId: string): string | null {
+    const fechas = (partidosPorJornada.get(jornadaId) ?? [])
+      .map((partido) => partido.fecha)
+      .filter((fecha): fecha is string => Boolean(fecha));
+    if (fechas.length === 0) return null;
+    return fechas.reduce((minima, fecha) => (fecha < minima ? fecha : minima));
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
@@ -135,65 +150,133 @@ export default async function CalendarioPage({
                       : "flex-none border-b-2 border-transparent pb-1 font-mono text-[.68rem] uppercase tracking-wider text-tinta-2"
                   }
                 >
-                  {jornada.etiqueta}
+                  {formatearEtiquetaJornada(jornada.etiqueta)}
                 </Link>
               );
             })}
           </nav>
 
           {jornadaSeleccionada ? (
-            <section className="flex flex-col gap-2">
-              <p className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
-                {jornadaSeleccionada.etiqueta}
-              </p>
-              <ul className="flex flex-col gap-2">
-                {(partidosPorJornada.get(jornadaSeleccionada.id) ?? []).map((partido) => {
-                  const yaJugado = Boolean(partido.fecha && partido.fecha <= hoy);
-                  const { golesLocal, golesVisitante } = contarMarcador(
-                    golesPorPartido.get(partido.id) ?? [],
-                    idsPorEquipo.get(partido.equipo_local_id) ?? new Set(),
-                    idsPorEquipo.get(partido.equipo_visitante_id) ?? new Set()
-                  );
-                  const local = equipoInfoPorId.get(partido.equipo_local_id);
-                  const visitante = equipoInfoPorId.get(partido.equipo_visitante_id);
-                  const fechaHora = [partido.fecha, partido.hora].filter(Boolean).join(" · ");
+            <>
+              <section className="flex flex-col gap-2">
+                <div className="flex items-baseline justify-between gap-2 border-b-2 border-azul pb-2">
+                  <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
+                    {tituloJornada(jornadaSeleccionada.etiqueta)}
+                  </h2>
+                  {fechaMasTempranaDeJornada(jornadaSeleccionada.id) && (
+                    <span className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                      {formatearFechaCorta(fechaMasTempranaDeJornada(jornadaSeleccionada.id)!)}
+                    </span>
+                  )}
+                </div>
+                <ul className="flex flex-col">
+                  {(partidosPorJornada.get(jornadaSeleccionada.id) ?? []).map((partido) => {
+                    const yaJugado = Boolean(partido.fecha && partido.fecha <= hoy);
+                    const { golesLocal, golesVisitante } = contarMarcador(
+                      golesPorPartido.get(partido.id) ?? [],
+                      idsPorEquipo.get(partido.equipo_local_id) ?? new Set(),
+                      idsPorEquipo.get(partido.equipo_visitante_id) ?? new Set()
+                    );
+                    const local = equipoInfoPorId.get(partido.equipo_local_id);
+                    const visitante = equipoInfoPorId.get(partido.equipo_visitante_id);
 
-                  return (
-                    <li key={partido.id} className="border-b border-linea-2 pb-2 last:border-b-0">
-                      <Link
-                        href={`/partidos/${partido.id}`}
-                        className="flex items-center justify-between gap-2 text-sm"
-                      >
-                        <span className="flex flex-wrap items-center gap-1.5">
-                          <Avatar
-                            src={local?.logoUrl ?? null}
-                            nombre={local?.nombre ?? "Equipo"}
-                            size={20}
-                          />
-                          {local?.nombre ?? "Equipo"}
-                          {yaJugado ? (
-                            <span className="font-mono">
-                              {golesLocal} — {golesVisitante}
+                    return (
+                      <li key={partido.id} className="border-b border-linea-2 last:border-b-0">
+                        <Link
+                          href={`/partidos/${partido.id}`}
+                          className="flex items-stretch gap-3 py-3 hover:text-azul"
+                        >
+                          <span className="w-10 flex-none pt-0.5 font-mono text-xs text-tinta-2">
+                            {partido.hora ? formatearHora(partido.hora) : ""}
+                          </span>
+                          <div className="flex flex-1 flex-col gap-1.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="flex items-center gap-1.5 text-sm font-medium text-azul">
+                                <Avatar
+                                  src={local?.logoUrl ?? null}
+                                  nombre={local?.nombre ?? "Equipo"}
+                                  size={18}
+                                />
+                                {local?.nombre ?? "Equipo"}
+                              </span>
+                              {yaJugado && (
+                                <span className="font-mono text-sm font-medium text-azul">
+                                  {golesLocal}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="flex items-center gap-1.5 text-sm text-tinta-2">
+                                <Avatar
+                                  src={visitante?.logoUrl ?? null}
+                                  nombre={visitante?.nombre ?? "Equipo"}
+                                  size={18}
+                                />
+                                {visitante?.nombre ?? "Equipo"}
+                              </span>
+                              {yaJugado && (
+                                <span className="font-mono text-sm text-tinta-2">
+                                  {golesVisitante}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {!yaJugado && (
+                            <span className="flex-none self-center rounded-full border border-linea px-2.5 py-1 font-mono text-[.58rem] uppercase tracking-wider text-tinta-2">
+                              Por jugarse
                             </span>
-                          ) : (
-                            <span className="font-mono text-tinta-3">vs</span>
                           )}
-                          <Avatar
-                            src={visitante?.logoUrl ?? null}
-                            nombre={visitante?.nombre ?? "Equipo"}
-                            size={20}
-                          />
-                          {visitante?.nombre ?? "Equipo"}
-                        </span>
-                        <span className="font-mono text-[.6rem] text-tinta-3">
-                          {fechaHora || "Sin fecha"}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+
+              {jornadaAnterior && (
+                <section className="flex flex-col gap-2">
+                  <div className="flex items-baseline justify-between gap-2 border-b-2 border-azul pb-2">
+                    <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
+                      {tituloJornada(jornadaAnterior.etiqueta)}
+                    </h2>
+                    <span className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                      Finalizada
+                    </span>
+                  </div>
+                  <ul className="flex flex-col">
+                    {(partidosPorJornada.get(jornadaAnterior.id) ?? []).map((partido) => {
+                      const yaJugado = Boolean(partido.fecha && partido.fecha <= hoy);
+                      const { golesLocal, golesVisitante } = contarMarcador(
+                        golesPorPartido.get(partido.id) ?? [],
+                        idsPorEquipo.get(partido.equipo_local_id) ?? new Set(),
+                        idsPorEquipo.get(partido.equipo_visitante_id) ?? new Set()
+                      );
+                      const local = equipoInfoPorId.get(partido.equipo_local_id);
+                      const visitante = equipoInfoPorId.get(partido.equipo_visitante_id);
+
+                      return (
+                        <li key={partido.id} className="border-b border-linea-2 last:border-b-0">
+                          <Link
+                            href={`/partidos/${partido.id}`}
+                            className="flex items-center justify-between gap-2 py-2.5 text-sm hover:text-azul"
+                          >
+                            <span className="flex-1 font-medium text-azul">
+                              {local?.nombre ?? "Equipo"}
+                            </span>
+                            <span className="flex-none font-mono">
+                              {yaJugado ? `${golesLocal} — ${golesVisitante}` : "vs"}
+                            </span>
+                            <span className="flex-1 text-right text-tinta-2">
+                              {visitante?.nombre ?? "Equipo"}
+                            </span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              )}
+            </>
           ) : (
             <p className="text-sm text-tinta-2">Todavía no hay jornadas registradas.</p>
           )}

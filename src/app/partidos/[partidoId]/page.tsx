@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { NombreJugadora } from "@/components/public/nombre-jugadora";
+import { BackButton } from "@/components/public/back-button";
+import { BottomNav } from "@/components/public/bottom-nav";
 import { contarMarcador } from "@/lib/marcador";
+import { formatearEtiquetaJornada } from "@/lib/jornada";
 import { CajaEquipo } from "./caja-equipo";
 
 export default async function DetallePartidoPage({
@@ -26,20 +29,24 @@ export default async function DetallePartidoPage({
 
   if (partidoError || !partido) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-        <p
-          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
-        >
-          No se pudo cargar el detalle del partido. Intenta de nuevo.
-        </p>
+      <div className="mx-auto flex max-w-2xl flex-col pb-20">
+        <div className="flex flex-col gap-6 p-6">
+          <BackButton />
+          <p
+            className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          >
+            No se pudo cargar el detalle del partido. Intenta de nuevo.
+          </p>
+        </div>
+        <BottomNav torneoId={null} />
       </div>
     );
   }
 
   const { data: jornada, error: jornadaError } = await supabase
     .from("jornadas")
-    .select("etiqueta")
+    .select("etiqueta, torneo_id")
     .eq("id", partido.jornada_id)
     .maybeSingle();
 
@@ -73,6 +80,12 @@ export default async function DetallePartidoPage({
       { nombre: jugadora.nombre, fotoUrl: jugadora.foto_url },
     ])
   );
+
+  function nombreEquipoDeJugadora(jugadoraId: string): string {
+    if (idsLocal.has(jugadoraId)) return equipoLocal?.nombre ?? "Local";
+    if (idsVisitante.has(jugadoraId)) return equipoVisitante?.nombre ?? "Visitante";
+    return "Equipo";
+  }
 
   const { data: alineaciones, error: alineacionesError } = await supabase
     .from("alineaciones")
@@ -116,9 +129,10 @@ export default async function DetallePartidoPage({
     .sort((a, b) => (a.numero_camiseta ?? 99) - (b.numero_camiseta ?? 99));
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col">
+    <div className="mx-auto flex max-w-2xl flex-col pb-20">
       {hayError ? (
-        <div className="p-6">
+        <div className="flex flex-col gap-6 p-6">
+          <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
             style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
@@ -128,29 +142,30 @@ export default async function DetallePartidoPage({
         </div>
       ) : (
         <>
-          <div
-            className="flex flex-col items-center gap-3 px-6 py-8"
-            style={{ background: "var(--tinta)" }}
-          >
-            <div className="flex items-center gap-6">
-              <CajaEquipo
-                nombre={equipoLocal?.nombre ?? "Local"}
-                logoUrl={equipoLocal?.logo_url ?? null}
-              />
-              <span className="font-tit text-4xl font-semibold" style={{ color: "var(--azul)" }}>
-                {golesLocal}&ndash;{golesVisitante}
-              </span>
-              <CajaEquipo
-                nombre={equipoVisitante?.nombre ?? "Visitante"}
-                logoUrl={equipoVisitante?.logo_url ?? null}
-              />
+          <div className="flex flex-col gap-3 px-6 py-8" style={{ background: "var(--tinta)" }}>
+            <BackButton oscuro />
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-6">
+                <CajaEquipo
+                  nombre={equipoLocal?.nombre ?? "Local"}
+                  logoUrl={equipoLocal?.logo_url ?? null}
+                />
+                <span className="font-tit text-4xl font-semibold" style={{ color: "var(--azul)" }}>
+                  {golesLocal}&ndash;{golesVisitante}
+                </span>
+                <CajaEquipo
+                  nombre={equipoVisitante?.nombre ?? "Visitante"}
+                  logoUrl={equipoVisitante?.logo_url ?? null}
+                />
+              </div>
+              <p
+                className="font-mono text-[.62rem] uppercase tracking-wider"
+                style={{ color: "rgba(244,237,224,.5)" }}
+              >
+                {jornada ? formatearEtiquetaJornada(jornada.etiqueta) : "Jornada"} ·{" "}
+                {partido.fecha ?? "Sin fecha"}
+              </p>
             </div>
-            <p
-              className="font-mono text-[.62rem] uppercase tracking-wider"
-              style={{ color: "rgba(244,237,224,.5)" }}
-            >
-              {jornada?.etiqueta ?? "Jornada"} · {partido.fecha ?? "Sin fecha"}
-            </p>
           </div>
 
           <div className="flex flex-col gap-6 p-6">
@@ -210,7 +225,10 @@ export default async function DetallePartidoPage({
                       nombre={jugadoraPorId.get(gol.jugadora_id)?.nombre ?? "Jugadora"}
                       fotoUrl={jugadoraPorId.get(gol.jugadora_id)?.fotoUrl ?? null}
                     />
-                    <span className="font-mono text-tinta-3">min. {gol.minuto}</span>
+                    <span className="font-mono text-[.68rem] text-tinta-3">
+                      {nombreEquipoDeJugadora(gol.jugadora_id)}
+                    </span>
+                    <span className="ml-auto font-mono text-tinta-2">{gol.minuto}&apos;</span>
                   </li>
                 ))}
               </ul>
@@ -225,14 +243,22 @@ export default async function DetallePartidoPage({
               <ul className="mt-3 flex flex-col gap-1.5">
                 {(tarjetas ?? []).map((tarjeta, indice) => (
                   <li key={indice} className="flex items-center gap-2 text-sm">
+                    <span
+                      aria-label={tarjeta.tipo}
+                      className="inline-block h-3 w-2.5 flex-none rounded-[2px]"
+                      style={{
+                        background: tarjeta.tipo === "roja" ? "var(--vino)" : "#B26A12",
+                      }}
+                    />
                     <NombreJugadora
                       id={tarjeta.jugadora_id}
                       nombre={jugadoraPorId.get(tarjeta.jugadora_id)?.nombre ?? "Jugadora"}
                       fotoUrl={jugadoraPorId.get(tarjeta.jugadora_id)?.fotoUrl ?? null}
                     />
-                    <span className="font-mono text-tinta-3">
-                      {tarjeta.tipo} — min. {tarjeta.minuto}
+                    <span className="font-mono text-[.68rem] text-tinta-3">
+                      {nombreEquipoDeJugadora(tarjeta.jugadora_id)}
                     </span>
+                    <span className="ml-auto font-mono text-tinta-2">{tarjeta.minuto}&apos;</span>
                   </li>
                 ))}
               </ul>
@@ -267,6 +293,7 @@ export default async function DetallePartidoPage({
           </div>
         </>
       )}
+      <BottomNav torneoId={jornada?.torneo_id ?? null} />
     </div>
   );
 }

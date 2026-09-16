@@ -11,7 +11,7 @@ export function NombreJugadora({
   fotoUrl?: string | null;
 }) {
   return (
-    <Link href={`/jugadoras/${id}`} className="inline-flex items-center gap-1.5 underline">
+    <Link href={`/jugadoras/${id}`} className="inline-flex items-center gap-1.5 hover:text-azul">
       <Avatar src={fotoUrl} nombre={nombre} size={20} />
       {nombre}
     </Link>

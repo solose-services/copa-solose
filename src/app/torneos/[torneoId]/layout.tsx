@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/ui/logo";
-import { TorneoNav } from "@/components/public/torneo-nav";
 import { BottomNav } from "@/components/public/bottom-nav";
 
 export default async function TorneoLayout({
@@ -43,7 +42,6 @@ export default async function TorneoLayout({
         <p className="font-mono text-[.68rem] uppercase tracking-wider text-tinta-2">
           {torneo?.nombre ?? "Torneo"}
         </p>
-        <TorneoNav torneoId={torneoId} />
       </header>
       <main className="flex flex-col gap-6 p-4 pb-20">{children}</main>
       <BottomNav torneoId={torneoId} />

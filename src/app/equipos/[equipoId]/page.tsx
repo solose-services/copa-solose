@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { NombreJugadora } from "@/components/public/nombre-jugadora";
 import { Avatar } from "@/components/ui/avatar";
+import { BackButton } from "@/components/public/back-button";
+import { BottomNav } from "@/components/public/bottom-nav";
 import { calcularPosiciones, type PartidoParaPosiciones } from "@/lib/posiciones";
 
 export default async function FichaEquipoPage({
@@ -24,13 +26,17 @@ export default async function FichaEquipoPage({
 
   if (equipoError || !equipo) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-        <p
-          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
-        >
-          No se pudo cargar la información del equipo. Intenta de nuevo.
-        </p>
+      <div className="mx-auto flex max-w-2xl flex-col pb-20">
+        <div className="flex flex-col gap-6 p-6">
+          <BackButton />
+          <p
+            className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          >
+            No se pudo cargar la información del equipo. Intenta de nuevo.
+          </p>
+        </div>
+        <BottomNav torneoId={null} />
       </div>
     );
   }
@@ -79,6 +85,24 @@ export default async function FichaEquipoPage({
           .select("jugadora_id, tipo")
           .in("partido_id", partidoIds)
       : { data: [] as { jugadora_id: string; tipo: string }[], error: null };
+
+  const { data: alineaciones, error: alineacionesError } =
+    partidoIds.length > 0
+      ? await supabase.from("alineaciones").select("jugadora_id").in("partido_id", partidoIds)
+      : { data: [] as { jugadora_id: string }[], error: null };
+
+  const golesPorJugadora = new Map<string, number>();
+  for (const gol of goles ?? []) {
+    golesPorJugadora.set(gol.jugadora_id, (golesPorJugadora.get(gol.jugadora_id) ?? 0) + 1);
+  }
+
+  const partidosJugadosPorJugadora = new Map<string, number>();
+  for (const alineacion of alineaciones ?? []) {
+    partidosJugadosPorJugadora.set(
+      alineacion.jugadora_id,
+      (partidosJugadosPorJugadora.get(alineacion.jugadora_id) ?? 0) + 1
+    );
+  }
 
   const golesPorPartido = new Map<string, { propios: number; rivales: number }>();
   for (const partido of partidos) {
@@ -239,6 +263,7 @@ export default async function FichaEquipoPage({
       partidosVisitanteError ||
       golesError ||
       tarjetasError ||
+      alineacionesError ||
       equiposTorneoError ||
       jugadorasTorneoError ||
       jornadasRegularesError ||
@@ -248,9 +273,10 @@ export default async function FichaEquipoPage({
   );
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col">
+    <div className="mx-auto flex max-w-2xl flex-col pb-20">
       {hayError ? (
-        <div className="p-6">
+        <div className="flex flex-col gap-6 p-6">
+          <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
             style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
@@ -260,23 +286,29 @@ export default async function FichaEquipoPage({
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-4 px-6 py-8" style={{ background: "var(--tinta)" }}>
-            <Avatar src={equipo.logo_url} nombre={equipo.nombre} size={56} />
-            <div>
-              <h1
-                className="font-tit text-xl uppercase tracking-tight"
-                style={{ color: "var(--crema)" }}
-              >
-                {equipo.nombre}
-              </h1>
-              {posicion > 0 && (
-                <p
-                  className="font-mono text-[.62rem] uppercase tracking-wider"
-                  style={{ color: "rgba(244,237,224,.6)" }}
+          <div
+            className="flex flex-col gap-4 px-6 py-8"
+            style={{ background: "var(--tinta)" }}
+          >
+            <BackButton oscuro />
+            <div className="flex items-center gap-4">
+              <Avatar src={equipo.logo_url} nombre={equipo.nombre} size={56} />
+              <div>
+                <h1
+                  className="font-tit text-xl uppercase tracking-tight"
+                  style={{ color: "var(--crema)" }}
                 >
-                  {posicion}° lugar{torneo?.categoria ? ` · ${torneo.categoria}` : ""}
-                </p>
-              )}
+                  {equipo.nombre}
+                </h1>
+                {posicion > 0 && (
+                  <p
+                    className="font-mono text-[.62rem] uppercase tracking-wider"
+                    style={{ color: "rgba(244,237,224,.6)" }}
+                  >
+                    {posicion}° lugar{torneo?.categoria ? ` · ${torneo.categoria}` : ""}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -334,24 +366,41 @@ export default async function FichaEquipoPage({
                   Jugadoras registradas · {jugadoras?.length ?? 0}
                 </h2>
               </div>
-              <ul className="mt-1 flex flex-col gap-1.5">
-                {(jugadoras ?? []).map((jugadora) => (
-                  <li key={jugadora.id} className="flex items-center gap-2 text-sm">
-                    <NombreJugadora
-                      id={jugadora.id}
-                      nombre={jugadora.nombre}
-                      fotoUrl={jugadora.foto_url}
-                    />
-                    {jugadora.numero_camiseta != null && (
-                      <span className="font-mono text-tinta-3">#{jugadora.numero_camiseta}</span>
-                    )}
-                  </li>
-                ))}
+              <ul className="mt-1 flex flex-col">
+                {(jugadoras ?? []).map((jugadora) => {
+                  const goles = golesPorJugadora.get(jugadora.id) ?? 0;
+                  const partidosJugadosJugadora = partidosJugadosPorJugadora.get(jugadora.id) ?? 0;
+                  const partesEstadistica = [
+                    goles > 0 ? `${goles} gol${goles === 1 ? "" : "es"}` : null,
+                    `${partidosJugadosJugadora} partido${partidosJugadosJugadora === 1 ? "" : "s"}`,
+                  ].filter((parte): parte is string => Boolean(parte));
+
+                  return (
+                    <li key={jugadora.id} className="border-b border-linea-2 last:border-b-0">
+                      <Link
+                        href={`/jugadoras/${jugadora.id}`}
+                        className="flex items-center gap-3 py-2.5 hover:text-azul"
+                      >
+                        <span className="w-5 flex-none text-right font-mono text-sm font-semibold text-tinta-2">
+                          {jugadora.numero_camiseta ?? ""}
+                        </span>
+                        <Avatar src={jugadora.foto_url} nombre={jugadora.nombre} size={32} />
+                        <span className="flex flex-col">
+                          <span className="text-sm font-medium">{jugadora.nombre}</span>
+                          <span className="font-mono text-[.68rem] text-tinta-2">
+                            {partesEstadistica.join(" · ")}
+                          </span>
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           </div>
         </>
       )}
+      <BottomNav torneoId={equipo.torneo_id} />
     </div>
   );
 }

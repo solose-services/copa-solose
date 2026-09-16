@@ -1,3 +1,4 @@
+import { Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { NombreEquipo } from "@/components/public/nombre-equipo";
 import { calcularPosiciones, type PartidoParaPosiciones } from "@/lib/posiciones";
@@ -210,11 +211,15 @@ export default async function PosicionesPage({
               </tbody>
             </table>
           </div>
-          {tabla.length > EQUIPOS_QUE_CLASIFICAN && (
-            <p className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-              Los primeros {EQUIPOS_QUE_CLASIFICAN} pasan a semifinales.
+          <div
+            className="flex items-center gap-3 rounded-md border-l-4 border-azul px-4 py-3"
+            style={{ background: "color-mix(in srgb, var(--azul) 8%, var(--papel))" }}
+          >
+            <Trophy size={18} strokeWidth={1.7} className="flex-none text-azul" />
+            <p className="font-tit text-sm uppercase tracking-wide text-azul">
+              Los cuatro primeros pasan a semifinales
             </p>
-          )}
+          </div>
         </>
       )}
     </div>

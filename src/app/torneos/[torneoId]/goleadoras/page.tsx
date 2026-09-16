@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { NombreJugadora } from "@/components/public/nombre-jugadora";
-import { NombreEquipo } from "@/components/public/nombre-equipo";
+import { Avatar } from "@/components/ui/avatar";
 
 export default async function GoleadorasPage({
   params,
@@ -24,11 +24,17 @@ export default async function GoleadorasPage({
     equipoIds.length > 0
       ? await supabase
           .from("jugadoras")
-          .select("id, nombre, foto_url, equipo_id")
+          .select("id, nombre, foto_url, equipo_id, numero_camiseta")
           .in("equipo_id", equipoIds)
           .order("nombre")
       : {
-          data: [] as { id: string; nombre: string; foto_url: string | null; equipo_id: string }[],
+          data: [] as {
+            id: string;
+            nombre: string;
+            foto_url: string | null;
+            equipo_id: string;
+            numero_camiseta: number | null;
+          }[],
           error: null,
         };
 
@@ -50,6 +56,7 @@ export default async function GoleadorasPage({
       nombre: jugadora.nombre,
       fotoUrl: jugadora.foto_url,
       equipoId: jugadora.equipo_id,
+      numeroCamiseta: jugadora.numero_camiseta,
       goles: golesPorJugadora.get(jugadora.id) ?? 0,
     }))
     .filter((fila) => fila.goles > 0)
@@ -72,40 +79,72 @@ export default async function GoleadorasPage({
       ) : tabla.length === 0 ? (
         <p className="text-sm text-tinta-2">Todavía no hay goles registrados.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  Jugadora
-                </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  Equipo
-                </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  Goles
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {tabla.map((fila) => (
-                <tr key={fila.id} className="border-b border-linea-2">
-                  <td className="p-2 text-sm">
-                    <NombreJugadora id={fila.id} nombre={fila.nombre} fotoUrl={fila.fotoUrl} />
-                  </td>
-                  <td className="p-2 text-sm">
-                    <NombreEquipo
-                      id={fila.equipoId}
-                      nombre={equipoInfoPorId.get(fila.equipoId)?.nombre ?? "Equipo"}
-                      logoUrl={equipoInfoPorId.get(fila.equipoId)?.logoUrl ?? null}
-                    />
-                  </td>
-                  <td className="p-2 text-sm font-medium">{fila.goles}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ol className="flex flex-col">
+          {tabla.map((fila, indice) => {
+            const esLider = indice === 0;
+            const equipoInfo = equipoInfoPorId.get(fila.equipoId);
+            const subtitulo = [
+              equipoInfo?.nombre ?? "Equipo",
+              fila.numeroCamiseta != null ? `#${fila.numeroCamiseta}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ");
+
+            return (
+              <li
+                key={fila.id}
+                className={
+                  esLider
+                    ? "border-b-2 border-azul pb-3"
+                    : "border-b border-linea-2 last:border-b-0"
+                }
+              >
+                <Link
+                  href={`/jugadoras/${fila.id}`}
+                  className={
+                    esLider
+                      ? "flex items-center gap-3 pt-1 hover:text-azul"
+                      : "flex items-center gap-3 py-2.5 hover:text-azul"
+                  }
+                >
+                  <span
+                    className={
+                      esLider
+                        ? "w-5 flex-none text-right font-mono text-sm font-semibold text-azul"
+                        : "w-5 flex-none text-right font-mono text-xs text-tinta-2"
+                    }
+                  >
+                    {indice + 1}
+                  </span>
+                  <Avatar src={fila.fotoUrl} nombre={fila.nombre} size={esLider ? 40 : 28} />
+                  <span className="flex flex-1 flex-col">
+                    <span
+                      className={
+                        esLider
+                          ? "font-tit text-lg uppercase tracking-tight text-azul"
+                          : "text-sm font-medium"
+                      }
+                    >
+                      {fila.nombre}
+                    </span>
+                    <span className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                      {subtitulo}
+                    </span>
+                  </span>
+                  <span
+                    className={
+                      esLider
+                        ? "font-tit text-3xl font-semibold text-azul"
+                        : "font-mono text-lg font-semibold"
+                    }
+                  >
+                    {fila.goles}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
       )}
     </div>
   );
