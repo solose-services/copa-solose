@@ -22,11 +22,11 @@ export function ToggleActivoButton({ id, activo }: { id: string; activo: boolean
       <button
         onClick={handleClick}
         disabled={pending}
-        className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+        className="rounded-sm border border-linea bg-papel px-3 py-1.5 text-sm font-medium hover:border-azul hover:text-azul disabled:opacity-50"
       >
         {activo ? "Desactivar" : "Activar"}
       </button>
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error && <span className="text-xs text-vino">{error}</span>}
     </div>
   );
 }

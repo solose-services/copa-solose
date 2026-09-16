@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Trash2 } from "lucide-react";
 
 export function DeleteButton({
   onDelete,
@@ -28,11 +29,12 @@ export function DeleteButton({
       <button
         onClick={handleClick}
         disabled={pending}
-        className="rounded border border-red-600 px-3 py-1 text-sm text-red-600 disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-sm border border-vino px-3 py-1.5 text-sm font-medium text-vino hover:bg-vino hover:text-white disabled:opacity-50"
       >
+        <Trash2 size={14} strokeWidth={1.7} />
         {pending ? "Eliminando…" : "Eliminar"}
       </button>
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error && <span className="text-xs text-vino">{error}</span>}
     </div>
   );
 }
