@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ReglamentoForm } from "./reglamento-form";
 
@@ -24,26 +25,39 @@ export default async function ReglamentoPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/admin/torneos" className="underline">
-        ← Volver a Torneos
+      <Link
+        href="/admin/torneos"
+        className="inline-flex items-center gap-1 text-sm text-tinta-2 hover:text-azul"
+      >
+        <ArrowLeft size={14} strokeWidth={1.7} />
+        Volver a Torneos
       </Link>
-      <h1 className="text-xl font-semibold">Reglamento — {torneo?.nombre ?? "Torneo"}</h1>
+      <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
+        <h1 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
+          Reglamento — {torneo?.nombre ?? "Torneo"}
+        </h1>
+      </div>
       {reglamentoError ? (
-        <p className="text-red-600">No se pudo cargar el reglamento actual. Intenta de nuevo.</p>
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
+          No se pudo cargar el reglamento actual. Intenta de nuevo.
+        </p>
       ) : reglamento?.pdf_url ? (
-        <p>
+        <p className="text-sm">
           Reglamento actual:{" "}
           <a
             href={reglamento.pdf_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline"
+            className="font-medium text-azul underline"
           >
             ver PDF
           </a>
         </p>
       ) : (
-        <p className="text-gray-600">Todavía no se ha subido un reglamento.</p>
+        <p className="text-sm text-tinta-2">Todavía no se ha subido un reglamento.</p>
       )}
       <ReglamentoForm torneoId={torneoId} />
     </div>

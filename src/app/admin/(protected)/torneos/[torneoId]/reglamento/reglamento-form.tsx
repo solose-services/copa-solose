@@ -11,21 +11,21 @@ export function ReglamentoForm({ torneoId }: { torneoId: string }) {
   const [state, formAction, pending] = useActionState(accion.bind(null, torneoId), {});
 
   return (
-    <form action={formAction} className="flex flex-wrap items-end gap-3 rounded border p-4">
+    <form action={formAction} className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1">
-        <span>Archivo PDF</span>
+        <span className="text-sm font-medium text-tinta">Archivo PDF</span>
         <input
           type="file"
           name="archivo"
           accept="application/pdf"
-          className="rounded border px-3 py-2"
+          className="rounded-md border border-azul bg-papel px-2.5 py-2 text-sm file:mr-3 file:rounded-sm file:border-0 file:bg-azul file:px-3 file:py-1.5 file:text-sm file:text-white focus:outline-none focus:ring-2 focus:ring-azul/20"
         />
       </label>
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state.error && <p className="text-sm text-vino">{state.error}</p>}
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+        className="rounded-sm bg-azul px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
       >
         {pending ? "Subiendo…" : "Subir reglamento"}
       </button>
