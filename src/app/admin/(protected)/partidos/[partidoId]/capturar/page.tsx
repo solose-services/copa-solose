@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AlineacionForm } from "./alineacion-form";
@@ -18,7 +19,7 @@ export default async function CapturarPartidoPage({
   const { partidoId } = await params;
   const supabase = await createClient();
 
-  const { data: partido } = await supabase
+  const { data: partido, error: partidoError } = await supabase
     .from("partidos")
     .select(
       "id, jornada_id, equipo_local_id, equipo_visitante_id, fecha, hora, mvp_jugadora_id, incidencias"
@@ -26,8 +27,21 @@ export default async function CapturarPartidoPage({
     .eq("id", partidoId)
     .maybeSingle();
 
-  if (!partido) {
+  if (!partido && !partidoError) {
     notFound();
+  }
+
+  if (partidoError || !partido) {
+    return (
+      <div className="flex flex-col gap-4">
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
+          No se pudo cargar el partido. Intenta de nuevo.
+        </p>
+      </div>
+    );
   }
 
   const { data: jornada } = await supabase
@@ -130,19 +144,24 @@ export default async function CapturarPartidoPage({
             ? `/admin/torneos/${jornada.torneo_id}/jornadas/${partido.jornada_id}/partidos`
             : "/admin/torneos"
         }
-        className="underline"
+        className="inline-flex items-center gap-1 text-sm text-tinta-2 hover:text-azul"
       >
-        ← Volver a Partidos
+        <ArrowLeft size={14} strokeWidth={1.7} />
+        Volver a Partidos
       </Link>
-      <h1 className="text-xl font-semibold">
-        {equipoLocal?.nombre ?? "Local"} {golesLocal} — {golesVisitante}{" "}
+      <h1 className="font-tit text-xl uppercase tracking-tight">
+        {equipoLocal?.nombre ?? "Local"}{" "}
+        <span className="font-mono">{golesLocal} — {golesVisitante}</span>{" "}
         {equipoVisitante?.nombre ?? "Visitante"}
       </h1>
-      <p className="text-sm text-gray-600">
+      <p className="font-mono text-[.68rem] uppercase tracking-wider text-tinta-2">
         {jornada?.etiqueta ?? "Jornada"} · {partido.fecha ?? "Sin fecha"}
       </p>
       {hayErrorAlineacion ? (
-        <p className="text-red-600">
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
           No se pudo cargar la información de la alineación. Intenta de nuevo.
         </p>
       ) : (
@@ -157,17 +176,25 @@ export default async function CapturarPartidoPage({
           seleccionadasIniciales={(alineaciones ?? []).map((fila) => fila.jugadora_id)}
         />
       )}
-      <section className="flex flex-col gap-3 rounded border p-4">
-        <h2 className="font-semibold">Goles</h2>
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
+          <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">Goles</h2>
+        </div>
         <GolForm partidoId={partidoId} jugadorasQueJugaron={jugadorasQueJugaron} />
         {golesError ? (
-          <p className="text-red-600">No se pudieron cargar los goles. Intenta de nuevo.</p>
+          <p
+            className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          >
+            No se pudieron cargar los goles. Intenta de nuevo.
+          </p>
         ) : (
           <ul className="flex flex-col gap-2">
             {(golesDetalle ?? []).map((gol) => (
-              <li key={gol.id} className="flex items-center gap-3">
+              <li key={gol.id} className="flex items-center gap-3 text-sm">
                 <span>
-                  {nombrePorJugadora.get(gol.jugadora_id) ?? "Jugadora"} — min. {gol.minuto}
+                  {nombrePorJugadora.get(gol.jugadora_id) ?? "Jugadora"}{" "}
+                  <span className="font-mono text-tinta-2">min. {gol.minuto}</span>
                 </span>
                 <DeleteButton
                   onDelete={eliminarGol.bind(null, gol.id, partidoId)}
@@ -178,18 +205,29 @@ export default async function CapturarPartidoPage({
           </ul>
         )}
       </section>
-      <section className="flex flex-col gap-3 rounded border p-4">
-        <h2 className="font-semibold">Tarjetas</h2>
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
+          <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
+            Tarjetas
+          </h2>
+        </div>
         <TarjetaForm partidoId={partidoId} jugadorasQueJugaron={jugadorasQueJugaron} />
         {tarjetasError ? (
-          <p className="text-red-600">No se pudieron cargar las tarjetas. Intenta de nuevo.</p>
+          <p
+            className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          >
+            No se pudieron cargar las tarjetas. Intenta de nuevo.
+          </p>
         ) : (
           <ul className="flex flex-col gap-2">
             {(tarjetasDetalle ?? []).map((tarjeta) => (
-              <li key={tarjeta.id} className="flex items-center gap-3">
+              <li key={tarjeta.id} className="flex items-center gap-3 text-sm">
                 <span>
-                  {nombrePorJugadora.get(tarjeta.jugadora_id) ?? "Jugadora"} — {tarjeta.tipo} —
-                  min. {tarjeta.minuto}
+                  {nombrePorJugadora.get(tarjeta.jugadora_id) ?? "Jugadora"}{" "}
+                  <span className="font-mono text-tinta-2">
+                    {tarjeta.tipo} — min. {tarjeta.minuto}
+                  </span>
                 </span>
                 <DeleteButton
                   onDelete={eliminarTarjeta.bind(null, tarjeta.id, partidoId)}
