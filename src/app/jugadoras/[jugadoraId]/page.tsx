@@ -171,15 +171,13 @@ export default async function FichaJugadoraPage({
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-4 px-6 py-8" style={{ background: "var(--tinta)" }}>
+          <div
+            className="flex items-center gap-4 px-6 py-8"
+            style={{ background: "var(--tinta)", color: "var(--crema)" }}
+          >
             <Avatar src={jugadora.foto_url} nombre={jugadora.nombre} size={56} />
             <div>
-              <h1
-                className="font-tit text-xl uppercase tracking-tight"
-                style={{ color: "var(--crema)" }}
-              >
-                {jugadora.nombre}
-              </h1>
+              <h1 className="font-tit text-xl uppercase tracking-tight">{jugadora.nombre}</h1>
               {equipo && (
                 <NombreEquipo id={equipo.id} nombre={equipo.nombre} logoUrl={equipo.logo_url} />
               )}

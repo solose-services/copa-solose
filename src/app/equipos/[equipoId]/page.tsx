@@ -122,7 +122,8 @@ export default async function FichaEquipoPage({
   const { data: equiposTorneo, error: equiposTorneoError } = await supabase
     .from("equipos")
     .select("id, orden_desempate_manual")
-    .eq("torneo_id", equipo.torneo_id);
+    .eq("torneo_id", equipo.torneo_id)
+    .order("nombre");
 
   const equipoIdsTorneo = (equiposTorneo ?? []).map((fila) => fila.id);
   const ordenDesempateManualPorEquipo = new Map(

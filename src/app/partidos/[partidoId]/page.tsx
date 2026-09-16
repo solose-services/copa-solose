@@ -2,30 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { NombreJugadora } from "@/components/public/nombre-jugadora";
 import { contarMarcador } from "@/lib/marcador";
-
-function CajaEquipo({ nombre, logoUrl }: { nombre: string; logoUrl: string | null }) {
-  return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div
-        className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border font-tit text-lg"
-        style={{ borderColor: "rgba(244,237,224,.35)", color: "var(--crema)" }}
-      >
-        {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- URL arbitraria pegada por el admin
-          <img src={logoUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          nombre.charAt(0).toUpperCase()
-        )}
-      </div>
-      <span
-        className="font-mono text-[.62rem] uppercase tracking-wider"
-        style={{ color: "rgba(244,237,224,.7)" }}
-      >
-        {nombre}
-      </span>
-    </div>
-  );
-}
+import { CajaEquipo } from "./caja-equipo";
 
 export default async function DetallePartidoPage({
   params,
