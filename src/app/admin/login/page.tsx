@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { validateLoginForm, type LoginFormErrors } from "@/lib/auth/login-form";
+import { Logo } from "@/components/ui/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,36 +43,44 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 p-6">
-      <h1 className="text-xl font-semibold">Acceso de administración</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
+    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
+      <Logo />
+      <h1 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
+        Acceso de administración
+      </h1>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         <label className="flex flex-col gap-1">
-          <span>Correo</span>
+          <span className="text-sm font-medium text-tinta">Correo</span>
           <input
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="rounded border px-3 py-2"
+            className="border-0 border-b border-linea bg-transparent px-1 py-2 text-sm focus:border-azul focus:outline-none"
           />
-          {errors.email && <span className="text-sm text-red-600">{errors.email}</span>}
+          {errors.email && <span className="text-sm text-vino">{errors.email}</span>}
         </label>
         <label className="flex flex-col gap-1">
-          <span>Contraseña</span>
+          <span className="text-sm font-medium text-tinta">Contraseña</span>
           <input
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="rounded border px-3 py-2"
+            className="border-0 border-b border-linea bg-transparent px-1 py-2 text-sm focus:border-azul focus:outline-none"
           />
-          {errors.password && (
-            <span className="text-sm text-red-600">{errors.password}</span>
-          )}
+          {errors.password && <span className="text-sm text-vino">{errors.password}</span>}
         </label>
-        {errorGeneral && <p className="text-sm text-red-600">{errorGeneral}</p>}
+        {errorGeneral && (
+          <p
+            className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          >
+            {errorGeneral}
+          </p>
+        )}
         <button
           type="submit"
           disabled={cargando}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+          className="rounded-sm bg-azul px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
         >
           {cargando ? "Entrando…" : "Entrar"}
         </button>
