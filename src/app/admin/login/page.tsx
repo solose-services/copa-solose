@@ -43,36 +43,69 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6">
+    <main
+      className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6"
+      style={{ background: "var(--tinta)", color: "var(--crema)" }}
+    >
       <Logo />
       <h1 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
         Acceso de administración
       </h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-tinta">Correo</span>
+          <span
+            className="font-mono text-[.62rem] uppercase tracking-wider"
+            style={{ color: "rgba(244,237,224,.55)" }}
+          >
+            Correo
+          </span>
           <input
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="border-0 border-b border-linea bg-transparent px-1 py-2 text-sm focus:border-azul focus:outline-none"
+            className="border-0 border-b bg-transparent px-1 py-2 text-sm focus:border-azul focus:outline-none"
+            style={{ borderBottomColor: "rgba(244,237,224,.25)", color: "var(--crema)" }}
           />
-          {errors.email && <span className="text-sm text-vino">{errors.email}</span>}
+          {errors.email && (
+            <span
+              className="text-sm"
+              style={{ color: "color-mix(in srgb, var(--vino) 55%, var(--crema))" }}
+            >
+              {errors.email}
+            </span>
+          )}
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-tinta">Contraseña</span>
+          <span
+            className="font-mono text-[.62rem] uppercase tracking-wider"
+            style={{ color: "rgba(244,237,224,.55)" }}
+          >
+            Contraseña
+          </span>
           <input
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="border-0 border-b border-linea bg-transparent px-1 py-2 text-sm focus:border-azul focus:outline-none"
+            className="border-0 border-b bg-transparent px-1 py-2 text-sm focus:border-azul focus:outline-none"
+            style={{ borderBottomColor: "rgba(244,237,224,.25)", color: "var(--crema)" }}
           />
-          {errors.password && <span className="text-sm text-vino">{errors.password}</span>}
+          {errors.password && (
+            <span
+              className="text-sm"
+              style={{ color: "color-mix(in srgb, var(--vino) 55%, var(--crema))" }}
+            >
+              {errors.password}
+            </span>
+          )}
         </label>
         {errorGeneral && (
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+            style={{
+              borderColor: "var(--vino)",
+              background: "rgba(90,42,34,.35)",
+              color: "var(--crema)",
+            }}
           >
             {errorGeneral}
           </p>
