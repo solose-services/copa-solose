@@ -21,21 +21,21 @@ export function IncidenciasForm({
   const [state, formAction, pending] = useActionState(accion.bind(null, partidoId), {});
 
   return (
-    <form action={formAction} className="flex flex-col gap-3 rounded border p-4">
+    <form action={formAction} className="flex flex-col gap-3">
       <label className="flex flex-col gap-1">
-        <span>Incidencias</span>
+        <span className="text-sm font-medium text-tinta">Incidencias</span>
         <textarea
           name="incidencias"
           defaultValue={incidenciasActuales ?? ""}
-          className="min-h-24 rounded border px-3 py-2"
           placeholder="Notas del partido (opcional)"
+          className="min-h-24 rounded-md border border-azul bg-papel px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-azul/20"
         />
       </label>
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state.error && <p className="text-sm text-vino">{state.error}</p>}
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+        className="self-start rounded-sm bg-azul px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
       >
         {pending ? "Guardando…" : "Guardar"}
       </button>

@@ -20,8 +20,12 @@ export function GolForm({
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1">
-        <span>Jugadora</span>
-        <select name="jugadoraId" className="rounded border px-3 py-2" defaultValue="">
+        <span className="text-sm font-medium text-tinta">Jugadora</span>
+        <select
+          name="jugadoraId"
+          defaultValue=""
+          className="rounded-md border border-azul bg-papel px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-azul/20"
+        >
           <option value="">Selecciona…</option>
           {jugadorasQueJugaron.map((jugadora) => (
             <option key={jugadora.id} value={jugadora.id}>
@@ -30,21 +34,29 @@ export function GolForm({
           ))}
         </select>
         {state.errors.jugadoraId && (
-          <span className="text-sm text-red-600">{state.errors.jugadoraId}</span>
+          <span className="text-sm text-vino">{state.errors.jugadoraId}</span>
         )}
       </label>
       <label className="flex flex-col gap-1">
-        <span>Minuto</span>
-        <input name="minuto" className="w-20 rounded border px-3 py-2" />
-        {state.errors.minuto && (
-          <span className="text-sm text-red-600">{state.errors.minuto}</span>
-        )}
+        <span className="text-sm font-medium text-tinta">Minuto</span>
+        <input
+          name="minuto"
+          className="w-20 rounded-md border border-azul bg-papel px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-azul/20"
+        />
+        {state.errors.minuto && <span className="text-sm text-vino">{state.errors.minuto}</span>}
       </label>
-      {state.errorGeneral && <p className="text-sm text-red-600">{state.errorGeneral}</p>}
+      {state.errorGeneral && (
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
+          {state.errorGeneral}
+        </p>
+      )}
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+        className="rounded-sm bg-azul px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
       >
         {pending ? "Agregando…" : "Agregar gol"}
       </button>
