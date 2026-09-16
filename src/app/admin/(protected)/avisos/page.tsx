@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { AvisoForm } from "./aviso-form";
 import { eliminarAviso } from "./actions";
+import { FormularioColapsable } from "@/components/admin/formulario-colapsable";
 
 export default async function AvisosPage() {
   const supabase = await createClient();
@@ -14,26 +16,39 @@ export default async function AvisosPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/admin" className="underline">
-        ← Volver
+      <Link
+        href="/admin"
+        className="inline-flex items-center gap-1 text-sm text-tinta-2 hover:text-azul"
+      >
+        <ArrowLeft size={14} strokeWidth={1.7} />
+        Volver
       </Link>
-      <h1 className="text-xl font-semibold">Avisos</h1>
-      <AvisoForm />
+      <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
+        <h1 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">Avisos</h1>
+      </div>
+      <FormularioColapsable etiqueta="Nuevo aviso…">
+        <AvisoForm />
+      </FormularioColapsable>
       {avisosError ? (
-        <p className="text-red-600">No se pudieron cargar los avisos. Intenta de nuevo.</p>
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
+          No se pudieron cargar los avisos. Intenta de nuevo.
+        </p>
       ) : (
         <ul className="flex flex-col gap-3">
           {(avisos ?? []).map((aviso) => (
-            <li key={aviso.id} className="flex flex-col gap-1 rounded border p-4">
+            <li key={aviso.id} className="flex flex-col gap-1 border-b border-linea-2 pb-3">
               <div className="flex items-center justify-between">
-                <span className="font-semibold">{aviso.titulo}</span>
+                <span className="font-medium">{aviso.titulo}</span>
                 <DeleteButton
                   onDelete={eliminarAviso.bind(null, aviso.id)}
                   confirmMessage={`¿Eliminar el aviso "${aviso.titulo}"? Esto no se puede deshacer.`}
                 />
               </div>
-              <p className="text-sm text-gray-700">{aviso.cuerpo}</p>
-              <span className="text-xs text-gray-500">
+              <p className="text-sm text-tinta-2">{aviso.cuerpo}</p>
+              <span className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                 {new Date(aviso.fecha_publicacion).toLocaleDateString("es-MX")}
               </span>
             </li>
