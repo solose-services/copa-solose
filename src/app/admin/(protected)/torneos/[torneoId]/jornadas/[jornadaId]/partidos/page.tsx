@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PartidoForm } from "./partido-form";
+import { FormularioColapsable } from "@/components/admin/formulario-colapsable";
+import { Avatar } from "@/components/ui/avatar";
 
 export default async function PartidosPage({
   params,
@@ -18,11 +21,13 @@ export default async function PartidosPage({
 
   const { data: equipos } = await supabase
     .from("equipos")
-    .select("id, nombre")
+    .select("id, nombre, logo_url")
     .eq("torneo_id", torneoId)
     .order("nombre");
 
-  const nombrePorEquipo = new Map((equipos ?? []).map((equipo) => [equipo.id, equipo.nombre]));
+  const equipoInfoPorId = new Map(
+    (equipos ?? []).map((equipo) => [equipo.id, { nombre: equipo.nombre, logoUrl: equipo.logo_url }])
+  );
 
   const { data: partidos, error: partidosError } = await supabase
     .from("partidos")
@@ -32,44 +37,82 @@ export default async function PartidosPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href={`/admin/torneos/${torneoId}/jornadas`} className="underline">
-        ← Volver a Jornadas
+      <Link
+        href={`/admin/torneos/${torneoId}/jornadas`}
+        className="inline-flex items-center gap-1 text-sm text-tinta-2 hover:text-azul"
+      >
+        <ArrowLeft size={14} strokeWidth={1.7} />
+        Volver a Jornadas
       </Link>
-      <h1 className="text-xl font-semibold">
-        Partidos — {jornada?.etiqueta ?? "Jornada"}
-      </h1>
-      <PartidoForm jornadaId={jornadaId} torneoId={torneoId} equipos={equipos ?? []} />
+      <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
+        <h1 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
+          Partidos — {jornada?.etiqueta ?? "Jornada"}
+        </h1>
+      </div>
+      <FormularioColapsable etiqueta="Nuevo partido…">
+        <PartidoForm jornadaId={jornadaId} torneoId={torneoId} equipos={equipos ?? []} />
+      </FormularioColapsable>
       {partidosError ? (
-        <p className="text-red-600">No se pudieron cargar los partidos. Intenta de nuevo.</p>
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
+          No se pudieron cargar los partidos. Intenta de nuevo.
+        </p>
       ) : (
-      <table className="w-full text-left">
-        <thead>
-          <tr>
-            <th className="p-2">Local</th>
-            <th className="p-2">Visitante</th>
-            <th className="p-2">Fecha</th>
-            <th className="p-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {(partidos ?? []).map((partido) => (
-            <tr key={partido.id} className="border-t">
-              <td className="p-2">
-                {nombrePorEquipo.get(partido.equipo_local_id) ?? "Equipo"}
-              </td>
-              <td className="p-2">
-                {nombrePorEquipo.get(partido.equipo_visitante_id) ?? "Equipo"}
-              </td>
-              <td className="p-2">{partido.fecha ?? "—"}</td>
-              <td className="p-2">
-                <Link href={`/admin/partidos/${partido.id}/capturar`} className="underline">
-                  Capturar
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                  Local
+                </th>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                  Visitante
+                </th>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                  Fecha
+                </th>
+                <th className="border-b border-linea p-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {(partidos ?? []).map((partido) => {
+                const local = equipoInfoPorId.get(partido.equipo_local_id);
+                const visitante = equipoInfoPorId.get(partido.equipo_visitante_id);
+                return (
+                  <tr key={partido.id} className="border-b border-linea-2">
+                    <td className="p-2 text-sm">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Avatar src={local?.logoUrl ?? null} nombre={local?.nombre ?? "Equipo"} size={20} />
+                        {local?.nombre ?? "Equipo"}
+                      </span>
+                    </td>
+                    <td className="p-2 text-sm">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Avatar
+                          src={visitante?.logoUrl ?? null}
+                          nombre={visitante?.nombre ?? "Equipo"}
+                          size={20}
+                        />
+                        {visitante?.nombre ?? "Equipo"}
+                      </span>
+                    </td>
+                    <td className="p-2 font-mono text-sm">{partido.fecha ?? "—"}</td>
+                    <td className="p-2">
+                      <Link
+                        href={`/admin/partidos/${partido.id}/capturar`}
+                        className="text-sm font-medium text-azul underline"
+                      >
+                        Capturar
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
