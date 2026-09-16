@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NombreEquipo } from "@/components/public/nombre-equipo";
 import { calcularPosiciones, type PartidoParaPosiciones } from "@/lib/posiciones";
 
+const EQUIPOS_QUE_CLASIFICAN = 4;
+
 export default async function PosicionesPage({
   params,
 }: {
@@ -143,58 +145,77 @@ export default async function PosicionesPage({
           No se pudieron cargar las posiciones. Intenta de nuevo.
         </p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  Equipo
-                </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  PJ
-                </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  Pts
-                </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  GF
-                </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  GC
-                </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  DG
-                </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  TA
-                </th>
-                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  TR
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {tabla.map((fila) => (
-                <tr key={fila.equipoId} className="border-b border-linea-2">
-                  <td className="p-2 text-sm">
-                    <NombreEquipo
-                      id={fila.equipoId}
-                      nombre={equipoInfoPorId.get(fila.equipoId)?.nombre ?? "Equipo"}
-                      logoUrl={equipoInfoPorId.get(fila.equipoId)?.logoUrl ?? null}
-                    />
-                  </td>
-                  <td className="p-2 text-sm">{fila.partidosJugados}</td>
-                  <td className="p-2 text-sm font-medium">{fila.puntos}</td>
-                  <td className="p-2 text-sm">{fila.golesFavor}</td>
-                  <td className="p-2 text-sm">{fila.golesContra}</td>
-                  <td className="p-2 text-sm">{fila.diferenciaGoles}</td>
-                  <td className="p-2 text-sm">{fila.tarjetasAmarillas}</td>
-                  <td className="p-2 text-sm">{fila.tarjetasRojas}</td>
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr>
+                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                    Equipo
+                  </th>
+                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                    PJ
+                  </th>
+                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                    Pts
+                  </th>
+                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                    GF
+                  </th>
+                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                    GC
+                  </th>
+                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                    DG
+                  </th>
+                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                    TA
+                  </th>
+                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                    TR
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {tabla.map((fila, indice) => {
+                  const clasifica = indice < EQUIPOS_QUE_CLASIFICAN;
+                  const esCorte = indice === EQUIPOS_QUE_CLASIFICAN - 1;
+                  return (
+                    <tr
+                      key={fila.equipoId}
+                      className={esCorte ? "border-b-2 border-azul" : "border-b border-linea-2"}
+                      style={
+                        clasifica
+                          ? { background: "color-mix(in srgb, var(--azul) 6%, var(--papel))" }
+                          : undefined
+                      }
+                    >
+                      <td className="p-2 text-sm">
+                        <NombreEquipo
+                          id={fila.equipoId}
+                          nombre={equipoInfoPorId.get(fila.equipoId)?.nombre ?? "Equipo"}
+                          logoUrl={equipoInfoPorId.get(fila.equipoId)?.logoUrl ?? null}
+                        />
+                      </td>
+                      <td className="p-2 text-sm">{fila.partidosJugados}</td>
+                      <td className="p-2 text-sm font-medium">{fila.puntos}</td>
+                      <td className="p-2 text-sm">{fila.golesFavor}</td>
+                      <td className="p-2 text-sm">{fila.golesContra}</td>
+                      <td className="p-2 text-sm">{fila.diferenciaGoles}</td>
+                      <td className="p-2 text-sm">{fila.tarjetasAmarillas}</td>
+                      <td className="p-2 text-sm">{fila.tarjetasRojas}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {tabla.length > EQUIPOS_QUE_CLASIFICAN && (
+            <p className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+              Los primeros {EQUIPOS_QUE_CLASIFICAN} pasan a semifinales.
+            </p>
+          )}
+        </>
       )}
     </div>
   );
