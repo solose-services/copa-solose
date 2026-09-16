@@ -5,10 +5,13 @@ import { Avatar } from "@/components/ui/avatar";
 
 export default async function CalendarioPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ torneoId: string }>;
+  searchParams: Promise<{ jornada?: string }>;
 }) {
   const { torneoId } = await params;
+  const { jornada: jornadaSeleccionadaId } = await searchParams;
   const supabase = await createClient();
 
   const { data: jornadas, error: jornadasError } = await supabase
@@ -45,7 +48,7 @@ export default async function CalendarioPage({
     jornadaIds.length > 0
       ? await supabase
           .from("partidos")
-          .select("id, jornada_id, equipo_local_id, equipo_visitante_id, fecha")
+          .select("id, jornada_id, equipo_local_id, equipo_visitante_id, fecha, hora")
           .in("jornada_id", jornadaIds)
       : {
           data: [] as {
@@ -54,6 +57,7 @@ export default async function CalendarioPage({
             equipo_local_id: string;
             equipo_visitante_id: string;
             fecha: string | null;
+            hora: string | null;
           }[],
           error: null,
         };
@@ -86,6 +90,24 @@ export default async function CalendarioPage({
     jornadasError || equiposError || jugadorasError || partidosError || golesError
   );
 
+  const jornadasOrdenadas = jornadas ?? [];
+  const jornadaConPartidoJugado = new Set(
+    (partidos ?? [])
+      .filter((partido) => partido.fecha && partido.fecha <= hoy)
+      .map((partido) => partido.jornada_id)
+  );
+  let jornadaActualId: string | undefined = jornadasOrdenadas[0]?.id;
+  for (const jornada of jornadasOrdenadas) {
+    if (jornadaConPartidoJugado.has(jornada.id)) {
+      jornadaActualId = jornada.id;
+    }
+  }
+
+  const jornadaSeleccionada =
+    jornadasOrdenadas.find((jornada) => jornada.id === jornadaSeleccionadaId) ??
+    jornadasOrdenadas.find((jornada) => jornada.id === jornadaActualId) ??
+    jornadasOrdenadas[0];
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
@@ -99,55 +121,83 @@ export default async function CalendarioPage({
           No se pudo cargar el calendario. Intenta de nuevo.
         </p>
       ) : (
-        (jornadas ?? []).map((jornada) => (
-          <section key={jornada.id} className="flex flex-col gap-2">
-            <p className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
-              {jornada.etiqueta}
-            </p>
-            <ul className="flex flex-col gap-2">
-              {(partidosPorJornada.get(jornada.id) ?? []).map((partido) => {
-                const yaJugado = Boolean(partido.fecha && partido.fecha <= hoy);
-                const { golesLocal, golesVisitante } = contarMarcador(
-                  golesPorPartido.get(partido.id) ?? [],
-                  idsPorEquipo.get(partido.equipo_local_id) ?? new Set(),
-                  idsPorEquipo.get(partido.equipo_visitante_id) ?? new Set()
-                );
-                const local = equipoInfoPorId.get(partido.equipo_local_id);
-                const visitante = equipoInfoPorId.get(partido.equipo_visitante_id);
+        <>
+          <nav className="flex gap-3 overflow-x-auto pb-1">
+            {jornadasOrdenadas.map((jornada) => {
+              const activa = jornada.id === jornadaSeleccionada?.id;
+              return (
+                <Link
+                  key={jornada.id}
+                  href={`?jornada=${jornada.id}`}
+                  className={
+                    activa
+                      ? "flex-none border-b-2 border-azul pb-1 font-mono text-[.68rem] uppercase tracking-wider text-azul"
+                      : "flex-none border-b-2 border-transparent pb-1 font-mono text-[.68rem] uppercase tracking-wider text-tinta-2"
+                  }
+                >
+                  {jornada.etiqueta}
+                </Link>
+              );
+            })}
+          </nav>
 
-                return (
-                  <li key={partido.id} className="border-b border-linea-2 pb-2 last:border-b-0">
-                    <Link
-                      href={`/partidos/${partido.id}`}
-                      className="flex items-center justify-between gap-2 text-sm"
-                    >
-                      <span className="flex flex-wrap items-center gap-1.5">
-                        <Avatar src={local?.logoUrl ?? null} nombre={local?.nombre ?? "Equipo"} size={20} />
-                        {local?.nombre ?? "Equipo"}
-                        {yaJugado ? (
-                          <span className="font-mono">
-                            {golesLocal} — {golesVisitante}
-                          </span>
-                        ) : (
-                          <span className="font-mono text-tinta-3">vs</span>
-                        )}
-                        <Avatar
-                          src={visitante?.logoUrl ?? null}
-                          nombre={visitante?.nombre ?? "Equipo"}
-                          size={20}
-                        />
-                        {visitante?.nombre ?? "Equipo"}
-                      </span>
-                      <span className="font-mono text-[.6rem] text-tinta-3">
-                        {partido.fecha ?? "Sin fecha"}
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ))
+          {jornadaSeleccionada ? (
+            <section className="flex flex-col gap-2">
+              <p className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-3">
+                {jornadaSeleccionada.etiqueta}
+              </p>
+              <ul className="flex flex-col gap-2">
+                {(partidosPorJornada.get(jornadaSeleccionada.id) ?? []).map((partido) => {
+                  const yaJugado = Boolean(partido.fecha && partido.fecha <= hoy);
+                  const { golesLocal, golesVisitante } = contarMarcador(
+                    golesPorPartido.get(partido.id) ?? [],
+                    idsPorEquipo.get(partido.equipo_local_id) ?? new Set(),
+                    idsPorEquipo.get(partido.equipo_visitante_id) ?? new Set()
+                  );
+                  const local = equipoInfoPorId.get(partido.equipo_local_id);
+                  const visitante = equipoInfoPorId.get(partido.equipo_visitante_id);
+                  const fechaHora = [partido.fecha, partido.hora].filter(Boolean).join(" · ");
+
+                  return (
+                    <li key={partido.id} className="border-b border-linea-2 pb-2 last:border-b-0">
+                      <Link
+                        href={`/partidos/${partido.id}`}
+                        className="flex items-center justify-between gap-2 text-sm"
+                      >
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          <Avatar
+                            src={local?.logoUrl ?? null}
+                            nombre={local?.nombre ?? "Equipo"}
+                            size={20}
+                          />
+                          {local?.nombre ?? "Equipo"}
+                          {yaJugado ? (
+                            <span className="font-mono">
+                              {golesLocal} — {golesVisitante}
+                            </span>
+                          ) : (
+                            <span className="font-mono text-tinta-3">vs</span>
+                          )}
+                          <Avatar
+                            src={visitante?.logoUrl ?? null}
+                            nombre={visitante?.nombre ?? "Equipo"}
+                            size={20}
+                          />
+                          {visitante?.nombre ?? "Equipo"}
+                        </span>
+                        <span className="font-mono text-[.6rem] text-tinta-3">
+                          {fechaHora || "Sin fecha"}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : (
+            <p className="text-sm text-tinta-2">Todavía no hay jornadas registradas.</p>
+          )}
+        </>
       )}
     </div>
   );
