@@ -15,10 +15,14 @@ export function SuspensionForm({
   const [state, formAction, pending] = useActionState(crearSuspension, estadoInicial);
 
   return (
-    <form action={formAction} className="flex flex-wrap items-end gap-3 rounded border p-4">
+    <form action={formAction} className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1">
-        <span>Jugadora</span>
-        <select name="jugadoraId" className="rounded border px-3 py-2" defaultValue="">
+        <span className="text-sm font-medium text-tinta">Jugadora</span>
+        <select
+          name="jugadoraId"
+          defaultValue=""
+          className="rounded-md border border-azul bg-papel px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-azul/20"
+        >
           <option value="">Selecciona…</option>
           {jugadoras.map((jugadora) => (
             <option key={jugadora.id} value={jugadora.id}>
@@ -27,12 +31,16 @@ export function SuspensionForm({
           ))}
         </select>
         {state.errors.jugadoraId && (
-          <span className="text-sm text-red-600">{state.errors.jugadoraId}</span>
+          <span className="text-sm text-vino">{state.errors.jugadoraId}</span>
         )}
       </label>
       <label className="flex flex-col gap-1">
-        <span>Desde jornada</span>
-        <select name="jornadaDesdeId" className="rounded border px-3 py-2" defaultValue="">
+        <span className="text-sm font-medium text-tinta">Desde jornada</span>
+        <select
+          name="jornadaDesdeId"
+          defaultValue=""
+          className="rounded-md border border-azul bg-papel px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-azul/20"
+        >
           <option value="">Selecciona…</option>
           {jornadas.map((jornada) => (
             <option key={jornada.id} value={jornada.id}>
@@ -41,12 +49,16 @@ export function SuspensionForm({
           ))}
         </select>
         {state.errors.jornadaDesdeId && (
-          <span className="text-sm text-red-600">{state.errors.jornadaDesdeId}</span>
+          <span className="text-sm text-vino">{state.errors.jornadaDesdeId}</span>
         )}
       </label>
       <label className="flex flex-col gap-1">
-        <span>Hasta jornada</span>
-        <select name="jornadaHastaId" className="rounded border px-3 py-2" defaultValue="">
+        <span className="text-sm font-medium text-tinta">Hasta jornada</span>
+        <select
+          name="jornadaHastaId"
+          defaultValue=""
+          className="rounded-md border border-azul bg-papel px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-azul/20"
+        >
           <option value="">Selecciona…</option>
           {jornadas.map((jornada) => (
             <option key={jornada.id} value={jornada.id}>
@@ -55,18 +67,28 @@ export function SuspensionForm({
           ))}
         </select>
         {state.errors.jornadaHastaId && (
-          <span className="text-sm text-red-600">{state.errors.jornadaHastaId}</span>
+          <span className="text-sm text-vino">{state.errors.jornadaHastaId}</span>
         )}
       </label>
       <label className="flex flex-col gap-1">
-        <span>Motivo (opcional)</span>
-        <input name="motivo" className="rounded border px-3 py-2" />
+        <span className="text-sm font-medium text-tinta">Motivo (opcional)</span>
+        <input
+          name="motivo"
+          className="rounded-md border border-azul bg-papel px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-azul/20"
+        />
       </label>
-      {state.errorGeneral && <p className="text-sm text-red-600">{state.errorGeneral}</p>}
+      {state.errorGeneral && (
+        <p
+          className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
+          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+        >
+          {state.errorGeneral}
+        </p>
+      )}
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+        className="rounded-sm bg-azul px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
       >
         {pending ? "Registrando…" : "Registrar suspensión"}
       </button>
