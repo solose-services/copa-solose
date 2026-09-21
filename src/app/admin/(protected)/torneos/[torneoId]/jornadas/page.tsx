@@ -33,10 +33,16 @@ export default async function JornadasPage({
         <ArrowLeft size={14} strokeWidth={1.7} />
         Volver a Torneos
       </Link>
-      <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
+      <div className="flex items-baseline justify-between gap-2 border-b-2 border-azul pb-2">
         <h1 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
           Jornadas — {torneo?.nombre ?? "Torneo"}
         </h1>
+        <Link
+          href={`/admin/torneos/${torneoId}/jornadas/suspendidas`}
+          className="text-sm font-medium text-azul underline"
+        >
+          Editar suspendidas
+        </Link>
       </div>
       <FormularioColapsable etiqueta="Nueva jornada…">
         <JornadaForm torneoId={torneoId} />

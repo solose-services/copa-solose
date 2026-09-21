@@ -2,15 +2,24 @@
 
 import { useActionState } from "react";
 import { agregarTarjeta, type AgregarTarjetaState } from "./actions";
+import { OpcionesJugadora, type JugadoraOpcion } from "./opciones-jugadora";
 
 const estadoInicial: AgregarTarjetaState = { errors: {} };
 
 export function TarjetaForm({
   partidoId,
   jugadorasQueJugaron,
+  equipoLocalId,
+  nombreLocal,
+  equipoVisitanteId,
+  nombreVisitante,
 }: {
   partidoId: string;
-  jugadorasQueJugaron: { id: string; nombre: string }[];
+  jugadorasQueJugaron: JugadoraOpcion[];
+  equipoLocalId: string;
+  nombreLocal: string;
+  equipoVisitanteId: string;
+  nombreVisitante: string;
 }) {
   const [state, formAction, pending] = useActionState(
     agregarTarjeta.bind(null, partidoId),
@@ -27,11 +36,13 @@ export function TarjetaForm({
           className="rounded-md border border-azul bg-papel px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-azul/20"
         >
           <option value="">Selecciona…</option>
-          {jugadorasQueJugaron.map((jugadora) => (
-            <option key={jugadora.id} value={jugadora.id}>
-              {jugadora.nombre}
-            </option>
-          ))}
+          <OpcionesJugadora
+            jugadoras={jugadorasQueJugaron}
+            equipoLocalId={equipoLocalId}
+            nombreLocal={nombreLocal}
+            equipoVisitanteId={equipoVisitanteId}
+            nombreVisitante={nombreVisitante}
+          />
         </select>
         {state.errors.jugadoraId && (
           <span className="text-sm text-vino">{state.errors.jugadoraId}</span>

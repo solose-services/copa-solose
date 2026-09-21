@@ -8,11 +8,16 @@ const estadoInicial: CrearSuspensionState = { errors: {} };
 export function SuspensionForm({
   jugadoras,
   jornadas,
+  torneoId = null,
 }: {
   jugadoras: { id: string; etiqueta: string }[];
   jornadas: { id: string; etiqueta: string }[];
+  torneoId?: string | null;
 }) {
-  const [state, formAction, pending] = useActionState(crearSuspension, estadoInicial);
+  const [state, formAction, pending] = useActionState(
+    crearSuspension.bind(null, torneoId),
+    estadoInicial
+  );
 
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-3">

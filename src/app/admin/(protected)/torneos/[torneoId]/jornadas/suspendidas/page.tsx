@@ -2,31 +2,49 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/admin/delete-button";
-import { SuspensionForm } from "./suspension-form";
-import { eliminarSuspension } from "./actions";
+import { SuspensionForm } from "@/app/admin/(protected)/suspensiones/suspension-form";
+import { eliminarSuspension } from "@/app/admin/(protected)/suspensiones/actions";
 import { FormularioColapsable } from "@/components/admin/formulario-colapsable";
 import { Avatar } from "@/components/ui/avatar";
 
-export default async function SuspensionesPage() {
+export default async function SuspendidasTorneoPage({
+  params,
+}: {
+  params: Promise<{ torneoId: string }>;
+}) {
+  const { torneoId } = await params;
   const supabase = await createClient();
 
-  const { data: jugadorasRaw, error: jugadorasError } = await supabase
-    .from("jugadoras")
-    .select("id, nombre, foto_url, equipo_id")
-    .order("nombre");
+  const { data: torneo } = await supabase
+    .from("torneos")
+    .select("nombre")
+    .eq("id", torneoId)
+    .maybeSingle();
 
   const { data: equipos, error: equiposError } = await supabase
     .from("equipos")
-    .select("id, nombre, logo_url");
+    .select("id, nombre")
+    .eq("torneo_id", torneoId);
 
-  const equipoInfoPorId = new Map(
-    (equipos ?? []).map((equipo) => [equipo.id, { nombre: equipo.nombre, logoUrl: equipo.logo_url }])
-  );
+  const equipoIds = (equipos ?? []).map((equipo) => equipo.id);
+  const nombreEquipoPorId = new Map((equipos ?? []).map((equipo) => [equipo.id, equipo.nombre]));
+
+  const { data: jugadorasRaw, error: jugadorasError } =
+    equipoIds.length > 0
+      ? await supabase
+          .from("jugadoras")
+          .select("id, nombre, foto_url, equipo_id")
+          .in("equipo_id", equipoIds)
+          .order("nombre")
+      : {
+          data: [] as { id: string; nombre: string; foto_url: string | null; equipo_id: string }[],
+          error: null,
+        };
 
   // Etiquetas planas para los <select> del formulario (un <option> no puede llevar imagen).
   const jugadoras = (jugadorasRaw ?? []).map((jugadora) => ({
     id: jugadora.id,
-    etiqueta: `${jugadora.nombre} (${equipoInfoPorId.get(jugadora.equipo_id)?.nombre ?? "Equipo"})`,
+    etiqueta: `${jugadora.nombre} (${nombreEquipoPorId.get(jugadora.equipo_id) ?? "Equipo"})`,
   }));
 
   // Detalle completo (con avatar) para la tabla de suspensiones ya registradas.
@@ -36,48 +54,58 @@ export default async function SuspensionesPage() {
       {
         nombre: jugadora.nombre,
         fotoUrl: jugadora.foto_url,
-        equipoNombre: equipoInfoPorId.get(jugadora.equipo_id)?.nombre ?? "Equipo",
+        equipoNombre: nombreEquipoPorId.get(jugadora.equipo_id) ?? "Equipo",
       },
     ])
   );
 
   const { data: jornadasRaw, error: jornadasError } = await supabase
     .from("jornadas")
-    .select("id, etiqueta, torneo_id")
+    .select("id, etiqueta")
+    .eq("torneo_id", torneoId)
     .order("orden");
-
-  const { data: torneos, error: torneosError } = await supabase
-    .from("torneos")
-    .select("id, nombre");
-
-  const nombrePorTorneo = new Map((torneos ?? []).map((torneo) => [torneo.id, torneo.nombre]));
 
   const jornadas = (jornadasRaw ?? []).map((jornada) => ({
     id: jornada.id,
-    etiqueta: `${nombrePorTorneo.get(jornada.torneo_id) ?? "Torneo"} — ${jornada.etiqueta}`,
+    etiqueta: jornada.etiqueta,
   }));
 
   const jornadaPorId = new Map(jornadas.map((jornada) => [jornada.id, jornada.etiqueta]));
+  const jornadaIds = jornadas.map((jornada) => jornada.id);
 
-  const { data: suspensiones, error: suspensionesError } = await supabase
-    .from("suspensiones")
-    .select("id, jugadora_id, jornada_desde_id, jornada_hasta_id, motivo, created_at")
-    .order("created_at", { ascending: false });
+  const { data: suspensiones, error: suspensionesError } =
+    jornadaIds.length > 0
+      ? await supabase
+          .from("suspensiones")
+          .select("id, jugadora_id, jornada_desde_id, jornada_hasta_id, motivo, created_at")
+          .in("jornada_desde_id", jornadaIds)
+          .order("created_at", { ascending: false })
+      : {
+          data: [] as {
+            id: string;
+            jugadora_id: string;
+            jornada_desde_id: string;
+            jornada_hasta_id: string;
+            motivo: string | null;
+            created_at: string;
+          }[],
+          error: null,
+        };
 
-  const hayErrorDeApoyo = Boolean(jugadorasError || equiposError || jornadasError || torneosError);
+  const hayErrorDeApoyo = Boolean(equiposError || jugadorasError || jornadasError);
 
   return (
     <div className="flex flex-col gap-6">
       <Link
-        href="/admin"
+        href={`/admin/torneos/${torneoId}/jornadas`}
         className="inline-flex items-center gap-1 text-sm text-tinta-2 hover:text-azul"
       >
         <ArrowLeft size={14} strokeWidth={1.7} />
-        Volver
+        Volver a Jornadas
       </Link>
       <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
         <h1 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
-          Suspensiones
+          Suspendidas — {torneo?.nombre ?? "Torneo"}
         </h1>
       </div>
       {hayErrorDeApoyo ? (
@@ -89,7 +117,7 @@ export default async function SuspensionesPage() {
         </p>
       ) : (
         <FormularioColapsable etiqueta="Nueva suspensión…">
-          <SuspensionForm jugadoras={jugadoras} jornadas={jornadas} />
+          <SuspensionForm jugadoras={jugadoras} jornadas={jornadas} torneoId={torneoId} />
         </FormularioColapsable>
       )}
       {suspensionesError ? (
@@ -99,6 +127,8 @@ export default async function SuspensionesPage() {
         >
           No se pudieron cargar las suspensiones. Intenta de nuevo.
         </p>
+      ) : (suspensiones ?? []).length === 0 ? (
+        <p className="text-sm text-tinta-2">Este torneo no tiene suspensiones registradas.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -143,7 +173,7 @@ export default async function SuspensionesPage() {
                     <td className="p-2 text-sm">{suspension.motivo ?? "—"}</td>
                     <td className="p-2">
                       <DeleteButton
-                        onDelete={eliminarSuspension.bind(null, null, suspension.id)}
+                        onDelete={eliminarSuspension.bind(null, torneoId, suspension.id)}
                         confirmMessage="¿Eliminar esta suspensión? Esto no se puede deshacer."
                       />
                     </td>

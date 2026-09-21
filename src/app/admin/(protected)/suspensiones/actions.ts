@@ -13,6 +13,7 @@ export interface CrearSuspensionState {
 }
 
 export async function crearSuspension(
+  torneoId: string | null,
   _prevState: CrearSuspensionState,
   formData: FormData
 ): Promise<CrearSuspensionState> {
@@ -102,6 +103,7 @@ export async function crearSuspension(
     }
 
     revalidatePath("/admin/suspensiones");
+    if (torneoId) revalidatePath(`/admin/torneos/${torneoId}/jornadas/suspendidas`);
     return { errors: {} };
   } catch {
     return {
@@ -112,6 +114,7 @@ export async function crearSuspension(
 }
 
 export async function eliminarSuspension(
+  torneoId: string | null,
   suspensionId: string
 ): Promise<{ error?: string }> {
   try {
@@ -126,6 +129,7 @@ export async function eliminarSuspension(
     }
 
     revalidatePath("/admin/suspensiones");
+    if (torneoId) revalidatePath(`/admin/torneos/${torneoId}/jornadas/suspendidas`);
     return {};
   } catch {
     return { error: "No se pudo eliminar la suspensión. Intenta de nuevo." };

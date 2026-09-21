@@ -68,7 +68,7 @@ export default async function CapturarPartidoPage({
     error: jugadorasLocalError,
   } = await supabase
     .from("jugadoras")
-    .select("id, nombre")
+    .select("id, nombre, equipo_id")
     .eq("equipo_id", partido.equipo_local_id)
     .order("nombre");
 
@@ -77,7 +77,7 @@ export default async function CapturarPartidoPage({
     error: jugadorasVisitanteError,
   } = await supabase
     .from("jugadoras")
-    .select("id, nombre")
+    .select("id, nombre, equipo_id")
     .eq("equipo_id", partido.equipo_visitante_id)
     .order("nombre");
 
@@ -103,18 +103,18 @@ export default async function CapturarPartidoPage({
     .order("minuto");
 
   const jugadorasQueJugaron = [
-    ...(jugadorasLocal ?? []).filter((jugadora) =>
-      (alineaciones ?? []).some((fila) => fila.jugadora_id === jugadora.id)
-    ),
-    ...(jugadorasVisitante ?? []).filter((jugadora) =>
-      (alineaciones ?? []).some((fila) => fila.jugadora_id === jugadora.id)
-    ),
+    ...(jugadorasLocal ?? [])
+      .filter((jugadora) => (alineaciones ?? []).some((fila) => fila.jugadora_id === jugadora.id))
+      .map((jugadora) => ({ id: jugadora.id, nombre: jugadora.nombre, equipoId: jugadora.equipo_id })),
+    ...(jugadorasVisitante ?? [])
+      .filter((jugadora) => (alineaciones ?? []).some((fila) => fila.jugadora_id === jugadora.id))
+      .map((jugadora) => ({ id: jugadora.id, nombre: jugadora.nombre, equipoId: jugadora.equipo_id })),
   ];
 
   const nombrePorJugadora = new Map(
     [...(jugadorasLocal ?? []), ...(jugadorasVisitante ?? [])].map((jugadora) => [
       jugadora.id,
-      jugadora.nombre,
+      { nombre: jugadora.nombre, equipoId: jugadora.equipo_id },
     ])
   );
 
@@ -125,7 +125,8 @@ export default async function CapturarPartidoPage({
           ...jugadorasQueJugaron,
           {
             id: partido.mvp_jugadora_id,
-            nombre: nombrePorJugadora.get(partido.mvp_jugadora_id) ?? "Jugadora",
+            nombre: nombrePorJugadora.get(partido.mvp_jugadora_id)?.nombre ?? "Jugadora",
+            equipoId: nombrePorJugadora.get(partido.mvp_jugadora_id)?.equipoId ?? "",
           },
         ]
       : jugadorasQueJugaron;
@@ -183,7 +184,14 @@ export default async function CapturarPartidoPage({
         <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
           <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">Goles</h2>
         </div>
-        <GolForm partidoId={partidoId} jugadorasQueJugaron={jugadorasQueJugaron} />
+        <GolForm
+          partidoId={partidoId}
+          jugadorasQueJugaron={jugadorasQueJugaron}
+          equipoLocalId={partido.equipo_local_id}
+          nombreLocal={equipoLocal?.nombre ?? "Local"}
+          equipoVisitanteId={partido.equipo_visitante_id}
+          nombreVisitante={equipoVisitante?.nombre ?? "Visitante"}
+        />
         {golesError ? (
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
@@ -196,7 +204,7 @@ export default async function CapturarPartidoPage({
             {(golesDetalle ?? []).map((gol) => (
               <li key={gol.id} className="flex items-center gap-3 text-sm">
                 <span>
-                  {nombrePorJugadora.get(gol.jugadora_id) ?? "Jugadora"}{" "}
+                  {nombrePorJugadora.get(gol.jugadora_id)?.nombre ?? "Jugadora"}{" "}
                   <span className="font-mono text-tinta-2">min. {gol.minuto}</span>
                 </span>
                 <DeleteButton
@@ -214,7 +222,14 @@ export default async function CapturarPartidoPage({
             Tarjetas
           </h2>
         </div>
-        <TarjetaForm partidoId={partidoId} jugadorasQueJugaron={jugadorasQueJugaron} />
+        <TarjetaForm
+          partidoId={partidoId}
+          jugadorasQueJugaron={jugadorasQueJugaron}
+          equipoLocalId={partido.equipo_local_id}
+          nombreLocal={equipoLocal?.nombre ?? "Local"}
+          equipoVisitanteId={partido.equipo_visitante_id}
+          nombreVisitante={equipoVisitante?.nombre ?? "Visitante"}
+        />
         {tarjetasError ? (
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
@@ -227,7 +242,7 @@ export default async function CapturarPartidoPage({
             {(tarjetasDetalle ?? []).map((tarjeta) => (
               <li key={tarjeta.id} className="flex items-center gap-3 text-sm">
                 <span>
-                  {nombrePorJugadora.get(tarjeta.jugadora_id) ?? "Jugadora"}{" "}
+                  {nombrePorJugadora.get(tarjeta.jugadora_id)?.nombre ?? "Jugadora"}{" "}
                   <span className="font-mono text-tinta-2">
                     {tarjeta.tipo} — min. {tarjeta.minuto}
                   </span>
@@ -245,6 +260,10 @@ export default async function CapturarPartidoPage({
         partidoId={partidoId}
         jugadorasQueJugaron={opcionesMvp}
         mvpActual={partido.mvp_jugadora_id}
+        equipoLocalId={partido.equipo_local_id}
+        nombreLocal={equipoLocal?.nombre ?? "Local"}
+        equipoVisitanteId={partido.equipo_visitante_id}
+        nombreVisitante={equipoVisitante?.nombre ?? "Visitante"}
       />
       <IncidenciasForm partidoId={partidoId} incidenciasActuales={partido.incidencias} />
     </div>

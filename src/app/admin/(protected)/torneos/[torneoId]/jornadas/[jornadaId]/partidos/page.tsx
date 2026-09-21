@@ -113,7 +113,10 @@ export default async function PartidosPage({
                         {visitante?.nombre ?? "Equipo"}
                       </span>
                     </td>
-                    <td className="p-2 font-mono text-sm">{partido.fecha ?? "—"}</td>
+                    <td className="p-2 font-mono text-sm">
+                      {partido.fecha ?? "—"}
+                      {partido.hora ? ` · ${partido.hora.slice(0, 5)}` : ""}
+                    </td>
                     <td className="p-2">
                       <Link
                         href={`/admin/partidos/${partido.id}/capturar`}
