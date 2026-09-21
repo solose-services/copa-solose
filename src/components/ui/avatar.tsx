@@ -7,10 +7,12 @@ interface AvatarProps {
   src: string | null;
   nombre: string;
   size?: number;
+  tono?: "azul" | "vino";
 }
 
-export function Avatar({ src, nombre, size = 24 }: AvatarProps) {
+export function Avatar({ src, nombre, size = 24, tono = "azul" }: AvatarProps) {
   const [fallo, setFallo] = useState(false);
+  const color = tono === "vino" ? "var(--vino)" : "var(--azul)";
 
   if (!src || fallo) {
     return (
@@ -21,8 +23,8 @@ export function Avatar({ src, nombre, size = 24 }: AvatarProps) {
           width: size,
           height: size,
           fontSize: size * 0.45,
-          background: "color-mix(in srgb, var(--azul) 14%, var(--papel))",
-          color: "var(--azul)",
+          background: `color-mix(in srgb, ${color} 14%, var(--papel))`,
+          color,
         }}
       >
         {inicialDe(nombre)}

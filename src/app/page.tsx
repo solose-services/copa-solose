@@ -1,26 +1,25 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/ui/logo";
-import { BottomNav } from "@/components/public/bottom-nav";
 
 export default async function PrincipalPage() {
   const supabase = await createClient();
 
-  const { data: avisos, error: avisosError } = await supabase
-    .from("avisos")
-    .select("id, titulo, cuerpo, fecha_publicacion")
-    .order("fecha_publicacion", { ascending: false })
-    .limit(10);
-
-  const { data: torneos, error: torneosError } = await supabase
-    .from("torneos")
-    .select("id, nombre, categoria")
-    .eq("activo", true)
-    .order("nombre");
+  const [
+    { data: avisos, error: avisosError },
+    { data: torneos, error: torneosError },
+  ] = await Promise.all([
+    supabase
+      .from("avisos")
+      .select("id, titulo, cuerpo, fecha_publicacion")
+      .order("fecha_publicacion", { ascending: false })
+      .limit(10),
+    supabase.from("torneos").select("id, nombre, categoria").eq("activo", true).order("nombre"),
+  ]);
 
   return (
     <div className="mx-auto flex max-w-[1160px] flex-col">
-      <main className="flex flex-col gap-8 p-6 pb-20">
+      <main className="flex flex-col gap-8 p-6">
         <h1>
           <Logo />
         </h1>
@@ -32,7 +31,7 @@ export default async function PrincipalPage() {
           {avisosError ? (
             <p
               className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-              style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+              style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
             >
               No se pudieron cargar los avisos. Intenta de nuevo.
             </p>
@@ -44,9 +43,9 @@ export default async function PrincipalPage() {
                 <li
                   key={aviso.id}
                   className="rounded-sm border-l-2 border-azul px-3 py-2.5"
-                  style={{ background: "rgba(27,63,209,.07)" }}
+                  style={{ background: "rgba(22,0,251,.07)" }}
                 >
-                  <p className="font-medium">{aviso.titulo}</p>
+                  <p className="font-tit text-lg">{aviso.titulo}</p>
                   <p className="text-sm text-tinta-2">{aviso.cuerpo}</p>
                 </li>
               ))}
@@ -63,7 +62,7 @@ export default async function PrincipalPage() {
           {torneosError ? (
             <p
               className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-              style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+              style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
             >
               No se pudieron cargar los torneos. Intenta de nuevo.
             </p>
@@ -75,7 +74,7 @@ export default async function PrincipalPage() {
                 <Link
                   key={torneo.id}
                   href={`/torneos/${torneo.id}/calendario`}
-                  className="rounded-sm border border-linea bg-papel p-6 text-center font-medium text-tinta hover:border-azul hover:text-azul"
+                  className="rounded-sm border border-linea bg-papel p-6 text-center font-tit text-lg uppercase tracking-tight text-tinta hover:border-azul hover:text-azul"
                 >
                   {torneo.nombre}
                 </Link>
@@ -84,7 +83,6 @@ export default async function PrincipalPage() {
           )}
         </section>
       </main>
-      <BottomNav torneoId={null} />
     </div>
   );
 }

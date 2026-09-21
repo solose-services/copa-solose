@@ -37,7 +37,7 @@ export default async function CapturarPartidoPage({
       <div className="flex flex-col gap-4">
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
         >
           No se pudo cargar el partido. Intenta de nuevo.
         </p>
@@ -163,7 +163,7 @@ export default async function CapturarPartidoPage({
       {hayErrorAlineacion ? (
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
         >
           No se pudo cargar la información de la alineación. Intenta de nuevo.
         </p>
@@ -187,7 +187,7 @@ export default async function CapturarPartidoPage({
         {golesError ? (
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+            style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
           >
             No se pudieron cargar los goles. Intenta de nuevo.
           </p>
@@ -218,7 +218,7 @@ export default async function CapturarPartidoPage({
         {tarjetasError ? (
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+            style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
           >
             No se pudieron cargar las tarjetas. Intenta de nuevo.
           </p>

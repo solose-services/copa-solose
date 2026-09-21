@@ -23,9 +23,17 @@ export default async function EquiposPage({
 
   const { data: equipos, error: equiposError } = await supabase
     .from("equipos")
-    .select("id, nombre, logo_url")
+    .select("id, nombre, logo_url, grupo_id")
     .eq("torneo_id", torneoId)
     .order("nombre");
+
+  const { data: grupos } = await supabase
+    .from("grupos")
+    .select("id, nombre")
+    .eq("torneo_id", torneoId)
+    .order("orden");
+
+  const nombreGrupoPorId = new Map((grupos ?? []).map((grupo) => [grupo.id, grupo.nombre]));
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,7 +55,7 @@ export default async function EquiposPage({
       {equiposError ? (
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
         >
           No se pudieron cargar los equipos. Intenta de nuevo.
         </p>
@@ -58,6 +66,9 @@ export default async function EquiposPage({
               <tr>
                 <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Nombre
+                </th>
+                <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
+                  Grupo
                 </th>
                 <th className="border-b border-linea p-2"></th>
                 <th className="border-b border-linea p-2"></th>
@@ -72,6 +83,9 @@ export default async function EquiposPage({
                       <Avatar src={equipo.logo_url} nombre={equipo.nombre} size={20} />
                       {equipo.nombre}
                     </span>
+                  </td>
+                  <td className="p-2 text-sm text-tinta-2">
+                    {equipo.grupo_id ? nombreGrupoPorId.get(equipo.grupo_id) ?? "—" : "—"}
                   </td>
                   <td className="p-2">
                     <Link

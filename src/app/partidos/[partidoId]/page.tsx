@@ -29,12 +29,12 @@ export default async function DetallePartidoPage({
 
   if (partidoError || !partido) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col pb-20">
+      <div className="mx-auto flex max-w-2xl flex-col pb-24">
         <div className="flex flex-col gap-6 p-6">
           <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+            style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
           >
             No se pudo cargar el detalle del partido. Intenta de nuevo.
           </p>
@@ -44,33 +44,51 @@ export default async function DetallePartidoPage({
     );
   }
 
-  const { data: jornada, error: jornadaError } = await supabase
-    .from("jornadas")
-    .select("etiqueta, torneo_id")
-    .eq("id", partido.jornada_id)
-    .maybeSingle();
-
-  const { data: equipoLocal, error: equipoLocalError } = await supabase
-    .from("equipos")
-    .select("nombre, logo_url")
-    .eq("id", partido.equipo_local_id)
-    .maybeSingle();
-
-  const { data: equipoVisitante, error: equipoVisitanteError } = await supabase
-    .from("equipos")
-    .select("nombre, logo_url")
-    .eq("id", partido.equipo_visitante_id)
-    .maybeSingle();
-
-  const { data: jugadorasLocal, error: jugadorasLocalError } = await supabase
-    .from("jugadoras")
-    .select("id, nombre, foto_url, numero_camiseta")
-    .eq("equipo_id", partido.equipo_local_id);
-
-  const { data: jugadorasVisitante, error: jugadorasVisitanteError } = await supabase
-    .from("jugadoras")
-    .select("id, nombre, foto_url, numero_camiseta")
-    .eq("equipo_id", partido.equipo_visitante_id);
+  const [
+    { data: jornada, error: jornadaError },
+    { data: equipoLocal, error: equipoLocalError },
+    { data: equipoVisitante, error: equipoVisitanteError },
+    { data: jugadorasLocal, error: jugadorasLocalError },
+    { data: jugadorasVisitante, error: jugadorasVisitanteError },
+    { data: alineaciones, error: alineacionesError },
+    { data: goles, error: golesError },
+    { data: tarjetas, error: tarjetasError },
+  ] = await Promise.all([
+    supabase
+      .from("jornadas")
+      .select("etiqueta, torneo_id")
+      .eq("id", partido.jornada_id)
+      .maybeSingle(),
+    supabase
+      .from("equipos")
+      .select("nombre, logo_url")
+      .eq("id", partido.equipo_local_id)
+      .maybeSingle(),
+    supabase
+      .from("equipos")
+      .select("nombre, logo_url")
+      .eq("id", partido.equipo_visitante_id)
+      .maybeSingle(),
+    supabase
+      .from("jugadoras")
+      .select("id, nombre, foto_url, numero_camiseta")
+      .eq("equipo_id", partido.equipo_local_id),
+    supabase
+      .from("jugadoras")
+      .select("id, nombre, foto_url, numero_camiseta")
+      .eq("equipo_id", partido.equipo_visitante_id),
+    supabase.from("alineaciones").select("jugadora_id").eq("partido_id", partidoId),
+    supabase
+      .from("goles")
+      .select("jugadora_id, minuto")
+      .eq("partido_id", partidoId)
+      .order("minuto"),
+    supabase
+      .from("tarjetas")
+      .select("jugadora_id, tipo, minuto")
+      .eq("partido_id", partidoId)
+      .order("minuto"),
+  ]);
 
   const idsLocal = new Set((jugadorasLocal ?? []).map((jugadora) => jugadora.id));
   const idsVisitante = new Set((jugadorasVisitante ?? []).map((jugadora) => jugadora.id));
@@ -86,23 +104,6 @@ export default async function DetallePartidoPage({
     if (idsVisitante.has(jugadoraId)) return equipoVisitante?.nombre ?? "Visitante";
     return "Equipo";
   }
-
-  const { data: alineaciones, error: alineacionesError } = await supabase
-    .from("alineaciones")
-    .select("jugadora_id")
-    .eq("partido_id", partidoId);
-
-  const { data: goles, error: golesError } = await supabase
-    .from("goles")
-    .select("jugadora_id, minuto")
-    .eq("partido_id", partidoId)
-    .order("minuto");
-
-  const { data: tarjetas, error: tarjetasError } = await supabase
-    .from("tarjetas")
-    .select("jugadora_id, tipo, minuto")
-    .eq("partido_id", partidoId)
-    .order("minuto");
 
   const hayError = Boolean(
     jornadaError ||
@@ -129,20 +130,20 @@ export default async function DetallePartidoPage({
     .sort((a, b) => (a.numero_camiseta ?? 99) - (b.numero_camiseta ?? 99));
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col pb-20">
+    <div className="mx-auto flex max-w-2xl flex-col pb-24">
       {hayError ? (
         <div className="flex flex-col gap-6 p-6">
           <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+            style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
           >
             No se pudo cargar el detalle del partido. Intenta de nuevo.
           </p>
         </div>
       ) : (
         <>
-          <div className="flex flex-col gap-3 px-6 py-8" style={{ background: "var(--tinta)" }}>
+          <div className="flex flex-col gap-3 px-6 py-8" style={{ background: "var(--vino)" }}>
             <BackButton oscuro />
             <div className="flex flex-col items-center gap-3">
               <div className="flex items-center gap-6">
@@ -160,7 +161,7 @@ export default async function DetallePartidoPage({
               </div>
               <p
                 className="font-mono text-[.62rem] uppercase tracking-wider"
-                style={{ color: "rgba(244,237,224,.5)" }}
+                style={{ color: "rgba(255,255,255,.5)" }}
               >
                 {jornada ? formatearEtiquetaJornada(jornada.etiqueta) : "Jornada"} ·{" "}
                 {partido.fecha ?? "Sin fecha"}
@@ -188,6 +189,7 @@ export default async function DetallePartidoPage({
                         id={jugadora.id}
                         nombre={jugadora.nombre}
                         fotoUrl={jugadora.foto_url}
+                        tono="vino"
                       />
                     </li>
                   ))}
@@ -204,6 +206,7 @@ export default async function DetallePartidoPage({
                         id={jugadora.id}
                         nombre={jugadora.nombre}
                         fotoUrl={jugadora.foto_url}
+                        tono="vino"
                       />
                     </li>
                   ))}
@@ -224,6 +227,7 @@ export default async function DetallePartidoPage({
                       id={gol.jugadora_id}
                       nombre={jugadoraPorId.get(gol.jugadora_id)?.nombre ?? "Jugadora"}
                       fotoUrl={jugadoraPorId.get(gol.jugadora_id)?.fotoUrl ?? null}
+                      tono="vino"
                     />
                     <span className="font-mono text-[.68rem] text-tinta-3">
                       {nombreEquipoDeJugadora(gol.jugadora_id)}
@@ -247,13 +251,17 @@ export default async function DetallePartidoPage({
                       aria-label={tarjeta.tipo}
                       className="inline-block h-3 w-2.5 flex-none rounded-[2px]"
                       style={{
-                        background: tarjeta.tipo === "roja" ? "var(--vino)" : "#B26A12",
+                        background:
+                          tarjeta.tipo === "roja"
+                            ? "var(--tarjeta-roja)"
+                            : "var(--tarjeta-amarilla)",
                       }}
                     />
                     <NombreJugadora
                       id={tarjeta.jugadora_id}
                       nombre={jugadoraPorId.get(tarjeta.jugadora_id)?.nombre ?? "Jugadora"}
                       fotoUrl={jugadoraPorId.get(tarjeta.jugadora_id)?.fotoUrl ?? null}
+                      tono="vino"
                     />
                     <span className="font-mono text-[.68rem] text-tinta-3">
                       {nombreEquipoDeJugadora(tarjeta.jugadora_id)}
@@ -276,6 +284,7 @@ export default async function DetallePartidoPage({
                   id={partido.mvp_jugadora_id}
                   nombre={jugadoraPorId.get(partido.mvp_jugadora_id)?.nombre ?? "Jugadora"}
                   fotoUrl={jugadoraPorId.get(partido.mvp_jugadora_id)?.fotoUrl ?? null}
+                  tono="vino"
                 />
               </section>
             )}

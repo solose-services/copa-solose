@@ -9,7 +9,11 @@ export function CajaEquipo({ nombre, logoUrl }: { nombre: string; logoUrl: strin
     <div className="flex flex-col items-center gap-1.5">
       <div
         className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-md border font-tit text-lg"
-        style={{ borderColor: "rgba(244,237,224,.35)", color: "var(--crema)" }}
+        style={{
+          borderColor: "var(--vino)",
+          background: "color-mix(in srgb, var(--vino) 14%, var(--papel))",
+          color: "var(--vino)",
+        }}
       >
         {logoUrl && !fallo ? (
           // eslint-disable-next-line @next/next/no-img-element -- URL arbitraria pegada por el admin
@@ -24,8 +28,8 @@ export function CajaEquipo({ nombre, logoUrl }: { nombre: string; logoUrl: strin
         )}
       </div>
       <span
-        className="font-mono text-[.62rem] uppercase tracking-wider"
-        style={{ color: "rgba(244,237,224,.7)" }}
+        className="font-tit text-[.68rem] uppercase tracking-wide"
+        style={{ color: "rgba(255,255,255,.85)" }}
       >
         {nombre}
       </span>

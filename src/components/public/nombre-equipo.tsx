@@ -5,14 +5,16 @@ export function NombreEquipo({
   id,
   nombre,
   logoUrl = null,
+  tono = "azul",
 }: {
   id: string;
   nombre: string;
   logoUrl?: string | null;
+  tono?: "azul" | "vino";
 }) {
   return (
     <Link href={`/equipos/${id}`} className="inline-flex items-center gap-1.5 hover:text-azul">
-      <Avatar src={logoUrl} nombre={nombre} size={20} />
+      <Avatar src={logoUrl} nombre={nombre} size={20} tono={tono} />
       {nombre}
     </Link>
   );

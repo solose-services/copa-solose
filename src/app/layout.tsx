@@ -1,11 +1,13 @@
-import type { Metadata } from "next";
-import { Oswald, Work_Sans, IBM_Plex_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Work_Sans, IBM_Plex_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const oswald = Oswald({
-  variable: "--font-oswald",
-  weight: ["500", "600"],
-  subsets: ["latin"],
+const nhaas = localFont({
+  src: "../fonts/NHaasGroteskDSPro-95Blk.otf",
+  variable: "--font-nhaas",
+  weight: "900",
+  display: "swap",
 });
 
 const workSans = Work_Sans({
@@ -24,13 +26,27 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Copa Solose",
   description: "Copa Solose",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${oswald.variable} ${workSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      className={`${nhaas.variable} ${workSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

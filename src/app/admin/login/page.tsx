@@ -55,7 +55,7 @@ export default function LoginPage() {
         <label className="flex flex-col gap-1">
           <span
             className="font-mono text-[.62rem] uppercase tracking-wider"
-            style={{ color: "rgba(244,237,224,.55)" }}
+            style={{ color: "rgba(255,255,255,.55)" }}
           >
             Correo
           </span>
@@ -64,7 +64,7 @@ export default function LoginPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             className="border-0 border-b bg-transparent px-1 py-2 text-sm focus:border-azul focus:outline-none"
-            style={{ borderBottomColor: "rgba(244,237,224,.25)", color: "var(--crema)" }}
+            style={{ borderBottomColor: "rgba(255,255,255,.25)", color: "var(--crema)" }}
           />
           {errors.email && (
             <span
@@ -78,7 +78,7 @@ export default function LoginPage() {
         <label className="flex flex-col gap-1">
           <span
             className="font-mono text-[.62rem] uppercase tracking-wider"
-            style={{ color: "rgba(244,237,224,.55)" }}
+            style={{ color: "rgba(255,255,255,.55)" }}
           >
             Contraseña
           </span>
@@ -87,7 +87,7 @@ export default function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="border-0 border-b bg-transparent px-1 py-2 text-sm focus:border-azul focus:outline-none"
-            style={{ borderBottomColor: "rgba(244,237,224,.25)", color: "var(--crema)" }}
+            style={{ borderBottomColor: "rgba(255,255,255,.25)", color: "var(--crema)" }}
           />
           {errors.password && (
             <span
@@ -103,7 +103,7 @@ export default function LoginPage() {
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
             style={{
               borderColor: "var(--vino)",
-              background: "rgba(90,42,34,.35)",
+              background: "color-mix(in srgb, var(--vino) 35%, var(--tinta))",
               color: "var(--crema)",
             }}
           >

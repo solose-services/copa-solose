@@ -1,9 +1,7 @@
 import { Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { NombreEquipo } from "@/components/public/nombre-equipo";
 import { calcularPosiciones, type PartidoParaPosiciones } from "@/lib/posiciones";
-
-const EQUIPOS_QUE_CLASIFICAN = 4;
+import { TablaPosiciones } from "@/components/public/tabla-posiciones";
 
 export default async function PosicionesPage({
   params,
@@ -13,11 +11,19 @@ export default async function PosicionesPage({
   const { torneoId } = await params;
   const supabase = await createClient();
 
-  const { data: equipos, error: equiposError } = await supabase
-    .from("equipos")
-    .select("id, nombre, logo_url, orden_desempate_manual")
-    .eq("torneo_id", torneoId)
-    .order("nombre");
+  const [
+    { data: equipos, error: equiposError },
+    { data: grupos },
+    { data: jornadas, error: jornadasError },
+  ] = await Promise.all([
+    supabase
+      .from("equipos")
+      .select("id, nombre, logo_url, orden_desempate_manual, grupo_id")
+      .eq("torneo_id", torneoId)
+      .order("nombre"),
+    supabase.from("grupos").select("id, nombre").eq("torneo_id", torneoId).order("orden"),
+    supabase.from("jornadas").select("id").eq("torneo_id", torneoId).eq("tipo", "regular"),
+  ]);
 
   const equipoIds = (equipos ?? []).map((equipo) => equipo.id);
   const equipoInfoPorId = new Map(
@@ -26,34 +32,21 @@ export default async function PosicionesPage({
   const ordenDesempateManualPorEquipo = new Map(
     (equipos ?? []).map((equipo) => [equipo.id, equipo.orden_desempate_manual])
   );
-
-  const { data: jugadoras, error: jugadorasError } =
-    equipoIds.length > 0
-      ? await supabase.from("jugadoras").select("id, equipo_id").in("equipo_id", equipoIds)
-      : { data: [] as { id: string; equipo_id: string }[], error: null };
-
-  const idsPorEquipo = new Map<string, Set<string>>();
-  for (const jugadora of jugadoras ?? []) {
-    const set = idsPorEquipo.get(jugadora.equipo_id) ?? new Set<string>();
-    set.add(jugadora.id);
-    idsPorEquipo.set(jugadora.equipo_id, set);
-  }
-
-  const { data: jornadas, error: jornadasError } = await supabase
-    .from("jornadas")
-    .select("id")
-    .eq("torneo_id", torneoId)
-    .eq("tipo", "regular");
-
   const jornadaIds = (jornadas ?? []).map((jornada) => jornada.id);
 
-  const { data: partidosRaw, error: partidosError } =
+  const [
+    { data: jugadoras, error: jugadorasError },
+    { data: partidosRaw, error: partidosError },
+  ] = await Promise.all([
+    equipoIds.length > 0
+      ? supabase.from("jugadoras").select("id, equipo_id").in("equipo_id", equipoIds)
+      : Promise.resolve({ data: [] as { id: string; equipo_id: string }[], error: null }),
     jornadaIds.length > 0
-      ? await supabase
+      ? supabase
           .from("partidos")
           .select("id, equipo_local_id, equipo_visitante_id, fecha")
           .in("jornada_id", jornadaIds)
-      : {
+      : Promise.resolve({
           data: [] as {
             id: string;
             equipo_local_id: string;
@@ -61,7 +54,15 @@ export default async function PosicionesPage({
             fecha: string | null;
           }[],
           error: null,
-        };
+        }),
+  ]);
+
+  const idsPorEquipo = new Map<string, Set<string>>();
+  for (const jugadora of jugadoras ?? []) {
+    const set = idsPorEquipo.get(jugadora.equipo_id) ?? new Set<string>();
+    set.add(jugadora.id);
+    idsPorEquipo.set(jugadora.equipo_id, set);
+  }
 
   const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(
     new Date()
@@ -71,18 +72,23 @@ export default async function PosicionesPage({
   );
   const partidoIds = partidosJugados.map((partido) => partido.id);
 
-  const { data: goles, error: golesError } =
+  const [
+    { data: goles, error: golesError },
+    { data: tarjetas, error: tarjetasError },
+  ] = await Promise.all([
     partidoIds.length > 0
-      ? await supabase.from("goles").select("partido_id, jugadora_id").in("partido_id", partidoIds)
-      : { data: [] as { partido_id: string; jugadora_id: string }[], error: null };
-
-  const { data: tarjetas, error: tarjetasError } =
+      ? supabase.from("goles").select("partido_id, jugadora_id").in("partido_id", partidoIds)
+      : Promise.resolve({ data: [] as { partido_id: string; jugadora_id: string }[], error: null }),
     partidoIds.length > 0
-      ? await supabase
+      ? supabase
           .from("tarjetas")
           .select("partido_id, jugadora_id, tipo")
           .in("partido_id", partidoIds)
-      : { data: [] as { partido_id: string; jugadora_id: string; tipo: string }[], error: null };
+      : Promise.resolve({
+          data: [] as { partido_id: string; jugadora_id: string; tipo: string }[],
+          error: null,
+        }),
+  ]);
 
   const partidosParaCalculo: PartidoParaPosiciones[] = partidosJugados.map((partido) => {
     const idsLocal = idsPorEquipo.get(partido.equipo_local_id) ?? new Set<string>();
@@ -122,6 +128,18 @@ export default async function PosicionesPage({
     };
   });
 
+  const gruposList = grupos ?? [];
+  const equipoIdsPorGrupo = new Map<string, string[]>();
+  for (const grupo of gruposList) {
+    equipoIdsPorGrupo.set(
+      grupo.id,
+      (equipos ?? []).filter((equipo) => equipo.grupo_id === grupo.id).map((equipo) => equipo.id)
+    );
+  }
+  const equipoIdsSinGrupo = (equipos ?? [])
+    .filter((equipo) => !equipo.grupo_id)
+    .map((equipo) => equipo.id);
+
   const tabla = calcularPosiciones(equipoIds, partidosParaCalculo, ordenDesempateManualPorEquipo);
 
   const hayError = Boolean(
@@ -141,76 +159,53 @@ export default async function PosicionesPage({
       {hayError ? (
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
         >
           No se pudieron cargar las posiciones. Intenta de nuevo.
         </p>
+      ) : gruposList.length > 0 ? (
+        <>
+          {gruposList.map((grupo) => {
+            const idsDelGrupo = equipoIdsPorGrupo.get(grupo.id) ?? [];
+            if (idsDelGrupo.length === 0) return null;
+            const tablaGrupo = calcularPosiciones(
+              idsDelGrupo,
+              partidosParaCalculo,
+              ordenDesempateManualPorEquipo
+            );
+            return (
+              <TablaPosiciones
+                key={grupo.id}
+                titulo={grupo.nombre}
+                tabla={tablaGrupo}
+                equipoInfoPorId={equipoInfoPorId}
+              />
+            );
+          })}
+          {equipoIdsSinGrupo.length > 0 && (
+            <TablaPosiciones
+              titulo="Sin grupo"
+              tabla={calcularPosiciones(
+                equipoIdsSinGrupo,
+                partidosParaCalculo,
+                ordenDesempateManualPorEquipo
+              )}
+              equipoInfoPorId={equipoInfoPorId}
+            />
+          )}
+          <div
+            className="flex items-center gap-3 rounded-md border-l-4 border-azul px-4 py-3"
+            style={{ background: "color-mix(in srgb, var(--azul) 8%, var(--papel))" }}
+          >
+            <Trophy size={18} strokeWidth={1.7} className="flex-none text-azul" />
+            <p className="font-tit text-sm uppercase tracking-wide text-azul">
+              Los primeros de cada grupo pasan a semifinales
+            </p>
+          </div>
+        </>
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr>
-                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                    Equipo
-                  </th>
-                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                    PJ
-                  </th>
-                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                    Pts
-                  </th>
-                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                    GF
-                  </th>
-                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                    GC
-                  </th>
-                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                    DG
-                  </th>
-                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                    TA
-                  </th>
-                  <th className="border-b border-linea p-2 font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                    TR
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {tabla.map((fila, indice) => {
-                  const clasifica = indice < EQUIPOS_QUE_CLASIFICAN;
-                  const esCorte = indice === EQUIPOS_QUE_CLASIFICAN - 1;
-                  return (
-                    <tr
-                      key={fila.equipoId}
-                      className={esCorte ? "border-b-2 border-azul" : "border-b border-linea-2"}
-                      style={
-                        clasifica
-                          ? { background: "color-mix(in srgb, var(--azul) 6%, var(--papel))" }
-                          : undefined
-                      }
-                    >
-                      <td className="p-2 text-sm">
-                        <NombreEquipo
-                          id={fila.equipoId}
-                          nombre={equipoInfoPorId.get(fila.equipoId)?.nombre ?? "Equipo"}
-                          logoUrl={equipoInfoPorId.get(fila.equipoId)?.logoUrl ?? null}
-                        />
-                      </td>
-                      <td className="p-2 text-sm">{fila.partidosJugados}</td>
-                      <td className="p-2 text-sm font-medium">{fila.puntos}</td>
-                      <td className="p-2 text-sm">{fila.golesFavor}</td>
-                      <td className="p-2 text-sm">{fila.golesContra}</td>
-                      <td className="p-2 text-sm">{fila.diferenciaGoles}</td>
-                      <td className="p-2 text-sm">{fila.tarjetasAmarillas}</td>
-                      <td className="p-2 text-sm">{fila.tarjetasRojas}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <TablaPosiciones tabla={tabla} equipoInfoPorId={equipoInfoPorId} />
           <div
             className="flex items-center gap-3 rounded-md border-l-4 border-azul px-4 py-3"
             style={{ background: "color-mix(in srgb, var(--azul) 8%, var(--papel))" }}

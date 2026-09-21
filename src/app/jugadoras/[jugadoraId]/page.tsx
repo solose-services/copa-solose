@@ -27,12 +27,12 @@ export default async function FichaJugadoraPage({
 
   if (jugadoraError || !jugadora) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col pb-20">
+      <div className="mx-auto flex max-w-2xl flex-col pb-24">
         <div className="flex flex-col gap-6 p-6">
           <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+            style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
           >
             No se pudo cargar la información de la jugadora. Intenta de nuevo.
           </p>
@@ -42,33 +42,35 @@ export default async function FichaJugadoraPage({
     );
   }
 
-  const { data: equipo, error: equipoError } = await supabase
-    .from("equipos")
-    .select("id, nombre, logo_url, torneo_id")
-    .eq("id", jugadora.equipo_id)
-    .maybeSingle();
-
-  const { data: companeras, error: companerasError } = await supabase
-    .from("jugadoras")
-    .select("id")
-    .eq("equipo_id", jugadora.equipo_id);
+  const [
+    { data: equipo, error: equipoError },
+    { data: companeras, error: companerasError },
+    { data: alineaciones, error: alineacionesError },
+  ] = await Promise.all([
+    supabase
+      .from("equipos")
+      .select("id, nombre, logo_url, torneo_id")
+      .eq("id", jugadora.equipo_id)
+      .maybeSingle(),
+    supabase.from("jugadoras").select("id").eq("equipo_id", jugadora.equipo_id),
+    supabase.from("alineaciones").select("partido_id").eq("jugadora_id", jugadoraId),
+  ]);
 
   const idsCompaneras = new Set((companeras ?? []).map((fila) => fila.id));
-
-  const { data: alineaciones, error: alineacionesError } = await supabase
-    .from("alineaciones")
-    .select("partido_id")
-    .eq("jugadora_id", jugadoraId);
-
   const partidoIds = (alineaciones ?? []).map((fila) => fila.partido_id);
 
-  const { data: partidos, error: partidosError } =
+  const [
+    { data: partidos, error: partidosError },
+    { data: goles, error: golesError },
+    { data: tarjetas, error: tarjetasError },
+    { count: vecesMvp, error: mvpError },
+  ] = await Promise.all([
     partidoIds.length > 0
-      ? await supabase
+      ? supabase
           .from("partidos")
           .select("id, jornada_id, equipo_local_id, equipo_visitante_id, fecha")
           .in("id", partidoIds)
-      : {
+      : Promise.resolve({
           data: [] as {
             id: string;
             jornada_id: string;
@@ -77,25 +79,18 @@ export default async function FichaJugadoraPage({
             fecha: string | null;
           }[],
           error: null,
-        };
-
-  const { data: goles, error: golesError } =
+        }),
     partidoIds.length > 0
-      ? await supabase.from("goles").select("partido_id, jugadora_id").in("partido_id", partidoIds)
-      : { data: [] as { partido_id: string; jugadora_id: string }[], error: null };
-
-  const { data: tarjetas, error: tarjetasError } =
+      ? supabase.from("goles").select("partido_id, jugadora_id").in("partido_id", partidoIds)
+      : Promise.resolve({ data: [] as { partido_id: string; jugadora_id: string }[], error: null }),
     partidoIds.length > 0
-      ? await supabase
-          .from("tarjetas")
-          .select("jugadora_id, tipo")
-          .in("partido_id", partidoIds)
-      : { data: [] as { jugadora_id: string; tipo: string }[], error: null };
-
-  const { count: vecesMvp, error: mvpError } = await supabase
-    .from("partidos")
-    .select("id", { count: "exact", head: true })
-    .eq("mvp_jugadora_id", jugadoraId);
+      ? supabase.from("tarjetas").select("jugadora_id, tipo").in("partido_id", partidoIds)
+      : Promise.resolve({ data: [] as { jugadora_id: string; tipo: string }[], error: null }),
+    supabase
+      .from("partidos")
+      .select("id", { count: "exact", head: true })
+      .eq("mvp_jugadora_id", jugadoraId),
+  ]);
 
   const golesPorPartido = new Map<string, { propios: number; rivales: number }>();
   for (const partido of partidos ?? []) {
@@ -121,13 +116,6 @@ export default async function FichaJugadoraPage({
   }
 
   const jornadaIdsDePartidos = [...new Set((partidos ?? []).map((partido) => partido.jornada_id))];
-  const { data: jornadasDePartidos, error: jornadasDePartidosError } =
-    jornadaIdsDePartidos.length > 0
-      ? await supabase.from("jornadas").select("id, etiqueta, orden").in("id", jornadaIdsDePartidos)
-      : { data: [] as { id: string; etiqueta: string; orden: number }[], error: null };
-
-  const jornadaPorId = new Map((jornadasDePartidos ?? []).map((jornada) => [jornada.id, jornada]));
-
   const rivalIdPorPartido = new Map(
     (partidos ?? []).map((partido) => [
       partido.id,
@@ -137,11 +125,20 @@ export default async function FichaJugadoraPage({
     ])
   );
   const rivalIds = [...new Set(rivalIdPorPartido.values())];
-  const { data: equiposRivales, error: equiposRivalesError } =
-    rivalIds.length > 0
-      ? await supabase.from("equipos").select("id, nombre").in("id", rivalIds)
-      : { data: [] as { id: string; nombre: string }[], error: null };
 
+  const [
+    { data: jornadasDePartidos, error: jornadasDePartidosError },
+    { data: equiposRivales, error: equiposRivalesError },
+  ] = await Promise.all([
+    jornadaIdsDePartidos.length > 0
+      ? supabase.from("jornadas").select("id, etiqueta, orden").in("id", jornadaIdsDePartidos)
+      : Promise.resolve({ data: [] as { id: string; etiqueta: string; orden: number }[], error: null }),
+    rivalIds.length > 0
+      ? supabase.from("equipos").select("id, nombre").in("id", rivalIds)
+      : Promise.resolve({ data: [] as { id: string; nombre: string }[], error: null }),
+  ]);
+
+  const jornadaPorId = new Map((jornadasDePartidos ?? []).map((jornada) => [jornada.id, jornada]));
   const nombreRivalPorId = new Map((equiposRivales ?? []).map((equipo) => [equipo.id, equipo.nombre]));
 
   const misGolesPorPartido = new Map<string, number>();
@@ -221,13 +218,13 @@ export default async function FichaJugadoraPage({
   );
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col pb-20">
+    <div className="mx-auto flex max-w-2xl flex-col pb-24">
       {hayError ? (
         <div className="flex flex-col gap-6 p-6">
           <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+            style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
           >
             No se pudo cargar la información de la jugadora. Intenta de nuevo.
           </p>
@@ -236,15 +233,20 @@ export default async function FichaJugadoraPage({
         <>
           <div
             className="flex flex-col gap-4 px-6 py-8"
-            style={{ background: "var(--tinta)", color: "var(--crema)" }}
+            style={{ background: "var(--vino)", color: "var(--crema)" }}
           >
             <BackButton oscuro />
             <div className="flex items-center gap-4">
-              <Avatar src={jugadora.foto_url} nombre={jugadora.nombre} size={56} />
+              <Avatar src={jugadora.foto_url} nombre={jugadora.nombre} size={56} tono="vino" />
               <div>
                 <h1 className="font-tit text-xl uppercase tracking-tight">{jugadora.nombre}</h1>
                 {equipo && (
-                  <NombreEquipo id={equipo.id} nombre={equipo.nombre} logoUrl={equipo.logo_url} />
+                  <NombreEquipo
+                    id={equipo.id}
+                    nombre={equipo.nombre}
+                    logoUrl={equipo.logo_url}
+                    tono="vino"
+                  />
                 )}
               </div>
             </div>
@@ -254,7 +256,7 @@ export default async function FichaJugadoraPage({
             {contextoGoleo && (
               <p
                 className="rounded-sm border-l-2 border-azul px-3 py-2.5 text-sm"
-                style={{ background: "rgba(27,63,209,.07)" }}
+                style={{ background: "rgba(22,0,251,.07)" }}
               >
                 {contextoGoleo} · {totalGoles} gol{totalGoles === 1 ? "" : "es"} en el torneo
               </p>
@@ -265,13 +267,13 @@ export default async function FichaJugadoraPage({
                 <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Jugados
                 </dt>
-                <dd className="text-2xl font-semibold">{partidoIds.length}</dd>
+                <dd className="font-tit text-2xl">{partidoIds.length}</dd>
               </div>
               <div>
                 <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   G-E-P
                 </dt>
-                <dd className="text-2xl font-semibold">
+                <dd className="font-tit text-2xl">
                   {ganados}-{empatados}-{perdidos}
                 </dd>
               </div>
@@ -279,27 +281,27 @@ export default async function FichaJugadoraPage({
                 <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Goles
                 </dt>
-                <dd className="text-2xl font-semibold">{totalGoles}</dd>
+                <dd className="font-tit text-2xl">{totalGoles}</dd>
               </div>
               <div>
                 <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   MVP
                 </dt>
-                <dd className="text-2xl font-semibold">{vecesMvp ?? 0}</dd>
+                <dd className="font-tit text-2xl">{vecesMvp ?? 0}</dd>
               </div>
             </dl>
             <div className="flex gap-6">
               <span className="text-sm">
                 <span
                   className="mr-1.5 inline-block h-3 w-2.5 rounded-[2px]"
-                  style={{ background: "#B26A12" }}
+                  style={{ background: "var(--tarjeta-amarilla)" }}
                 />
                 {totalAmarillas} amarillas
               </span>
               <span className="text-sm">
                 <span
                   className="mr-1.5 inline-block h-3 w-2.5 rounded-[2px]"
-                  style={{ background: "var(--vino)" }}
+                  style={{ background: "var(--tarjeta-roja)" }}
                 />
                 {totalRojas} rojas
               </span>

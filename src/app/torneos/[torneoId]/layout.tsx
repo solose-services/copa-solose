@@ -26,7 +26,7 @@ export default async function TorneoLayout({
         className="sticky top-0 z-10 flex flex-col gap-3 border-b border-linea px-4 pb-3"
         style={{
           paddingTop: "calc(.55rem + env(safe-area-inset-top))",
-          background: "rgba(244,237,224,.94)",
+          background: "rgba(255,255,255,.94)",
           backdropFilter: "saturate(1.4) blur(8px)",
         }}
       >
@@ -43,7 +43,7 @@ export default async function TorneoLayout({
           {torneo?.nombre ?? "Torneo"}
         </p>
       </header>
-      <main className="flex flex-col gap-6 p-4 pb-20">{children}</main>
+      <main className="flex flex-col gap-6 p-4 pb-24">{children}</main>
       <BottomNav torneoId={torneoId} />
     </div>
   );

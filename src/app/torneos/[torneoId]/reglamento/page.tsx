@@ -22,7 +22,7 @@ export default async function ReglamentoPublicoPage({
       {reglamentoError ? (
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
         >
           No se pudo cargar el reglamento. Intenta de nuevo.
         </p>

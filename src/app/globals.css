@@ -1,20 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --crema: #F4EDE0;
-  --papel: #FFFCF6;
-  --azul: #1B3FD1;
-  --vino: #5A2A22;
+  --crema: #FFFFFF;
+  --papel: #FFFFFF;
+  --amarillo: #F0E79D;
+  --amarillo-suave: color-mix(in srgb, #F0E79D 40%, white);
+  --azul: #1600FB;
+  --vino: #65232D;
   --tinta: #241D14;
   --tinta-2: #6B5F50;
   --tinta-3: #9A8F80;
   --linea: rgba(36, 29, 20, .14);
   --linea-2: rgba(36, 29, 20, .07);
+  --tarjeta-amarilla: #FFC700;
+  --tarjeta-roja: #E8112D;
 }
 
 @theme inline {
   --color-crema: var(--crema);
   --color-papel: var(--papel);
+  --color-amarillo: var(--amarillo);
+  --color-amarillo-suave: var(--amarillo-suave);
   --color-azul: var(--azul);
   --color-vino: var(--vino);
   --color-tinta: var(--tinta);
@@ -22,7 +28,9 @@
   --color-tinta-3: var(--tinta-3);
   --color-linea: var(--linea);
   --color-linea-2: var(--linea-2);
-  --font-tit: var(--font-oswald);
+  --color-tarjeta-amarilla: var(--tarjeta-amarilla);
+  --color-tarjeta-roja: var(--tarjeta-roja);
+  --font-tit: var(--font-nhaas);
   --font-cuerpo: var(--font-work-sans);
   --font-mono: var(--font-ibm-plex-mono);
   --radius-xs: 3px;
@@ -43,7 +51,7 @@
 
   h1, h2, h3 {
     font-family: var(--font-tit), ui-sans-serif, system-ui, sans-serif;
-    font-weight: 600;
+    font-weight: 900;
     letter-spacing: .02em;
     margin: 0;
   }

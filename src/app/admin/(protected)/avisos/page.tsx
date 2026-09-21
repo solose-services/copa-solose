@@ -32,7 +32,7 @@ export default async function AvisosPage() {
       {avisosError ? (
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
         >
           No se pudieron cargar los avisos. Intenta de nuevo.
         </p>
@@ -41,7 +41,7 @@ export default async function AvisosPage() {
           {(avisos ?? []).map((aviso) => (
             <li key={aviso.id} className="flex flex-col gap-1 border-b border-linea-2 pb-3">
               <div className="flex items-center justify-between">
-                <span className="font-medium">{aviso.titulo}</span>
+                <span className="font-tit text-base">{aviso.titulo}</span>
                 <DeleteButton
                   onDelete={eliminarAviso.bind(null, aviso.id)}
                   confirmMessage={`¿Eliminar el aviso "${aviso.titulo}"? Esto no se puede deshacer.`}

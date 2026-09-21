@@ -21,9 +21,15 @@ export default async function PartidosPage({
 
   const { data: equipos } = await supabase
     .from("equipos")
-    .select("id, nombre, logo_url")
+    .select("id, nombre, logo_url, grupo_id")
     .eq("torneo_id", torneoId)
     .order("nombre");
+
+  const { data: grupos } = await supabase
+    .from("grupos")
+    .select("id, nombre")
+    .eq("torneo_id", torneoId)
+    .order("orden");
 
   const equipoInfoPorId = new Map(
     (equipos ?? []).map((equipo) => [equipo.id, { nombre: equipo.nombre, logoUrl: equipo.logo_url }])
@@ -50,12 +56,21 @@ export default async function PartidosPage({
         </h1>
       </div>
       <FormularioColapsable etiqueta="Nuevo partido…">
-        <PartidoForm jornadaId={jornadaId} torneoId={torneoId} equipos={equipos ?? []} />
+        <PartidoForm
+          jornadaId={jornadaId}
+          torneoId={torneoId}
+          equipos={(equipos ?? []).map((equipo) => ({
+            id: equipo.id,
+            nombre: equipo.nombre,
+            grupoId: equipo.grupo_id,
+          }))}
+          grupos={grupos ?? []}
+        />
       </FormularioColapsable>
       {partidosError ? (
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
         >
           No se pudieron cargar los partidos. Intenta de nuevo.
         </p>

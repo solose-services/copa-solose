@@ -16,43 +16,33 @@ export default async function CalendarioPage({
   const { jornada: jornadaSeleccionadaId } = await searchParams;
   const supabase = await createClient();
 
-  const { data: jornadas, error: jornadasError } = await supabase
-    .from("jornadas")
-    .select("id, etiqueta, orden")
-    .eq("torneo_id", torneoId)
-    .order("orden");
-
-  const { data: equipos, error: equiposError } = await supabase
-    .from("equipos")
-    .select("id, nombre, logo_url")
-    .eq("torneo_id", torneoId);
+  const [
+    { data: jornadas, error: jornadasError },
+    { data: equipos, error: equiposError },
+  ] = await Promise.all([
+    supabase.from("jornadas").select("id, etiqueta, orden").eq("torneo_id", torneoId).order("orden"),
+    supabase.from("equipos").select("id, nombre, logo_url").eq("torneo_id", torneoId),
+  ]);
 
   const equipoInfoPorId = new Map(
     (equipos ?? []).map((equipo) => [equipo.id, { nombre: equipo.nombre, logoUrl: equipo.logo_url }])
   );
   const equipoIds = (equipos ?? []).map((equipo) => equipo.id);
-
-  const { data: jugadoras, error: jugadorasError } =
-    equipoIds.length > 0
-      ? await supabase.from("jugadoras").select("id, equipo_id").in("equipo_id", equipoIds)
-      : { data: [] as { id: string; equipo_id: string }[], error: null };
-
-  const idsPorEquipo = new Map<string, Set<string>>();
-  for (const jugadora of jugadoras ?? []) {
-    const set = idsPorEquipo.get(jugadora.equipo_id) ?? new Set<string>();
-    set.add(jugadora.id);
-    idsPorEquipo.set(jugadora.equipo_id, set);
-  }
-
   const jornadaIds = (jornadas ?? []).map((jornada) => jornada.id);
 
-  const { data: partidos, error: partidosError } =
+  const [
+    { data: jugadoras, error: jugadorasError },
+    { data: partidos, error: partidosError },
+  ] = await Promise.all([
+    equipoIds.length > 0
+      ? supabase.from("jugadoras").select("id, equipo_id").in("equipo_id", equipoIds)
+      : Promise.resolve({ data: [] as { id: string; equipo_id: string }[], error: null }),
     jornadaIds.length > 0
-      ? await supabase
+      ? supabase
           .from("partidos")
           .select("id, jornada_id, equipo_local_id, equipo_visitante_id, fecha, hora")
           .in("jornada_id", jornadaIds)
-      : {
+      : Promise.resolve({
           data: [] as {
             id: string;
             jornada_id: string;
@@ -62,7 +52,15 @@ export default async function CalendarioPage({
             hora: string | null;
           }[],
           error: null,
-        };
+        }),
+  ]);
+
+  const idsPorEquipo = new Map<string, Set<string>>();
+  for (const jugadora of jugadoras ?? []) {
+    const set = idsPorEquipo.get(jugadora.equipo_id) ?? new Set<string>();
+    set.add(jugadora.id);
+    idsPorEquipo.set(jugadora.equipo_id, set);
+  }
 
   const partidoIds = (partidos ?? []).map((partido) => partido.id);
 
@@ -131,7 +129,7 @@ export default async function CalendarioPage({
       {hayError ? (
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
         >
           No se pudo cargar el calendario. Intenta de nuevo.
         </p>
@@ -146,8 +144,8 @@ export default async function CalendarioPage({
                   href={`?jornada=${jornada.id}`}
                   className={
                     activa
-                      ? "flex-none border-b-2 border-azul pb-1 font-mono text-[.68rem] uppercase tracking-wider text-azul"
-                      : "flex-none border-b-2 border-transparent pb-1 font-mono text-[.68rem] uppercase tracking-wider text-tinta-2"
+                      ? "flex-none border-b-2 border-azul pb-1 font-tit text-sm uppercase tracking-wide text-azul"
+                      : "flex-none border-b-2 border-transparent pb-1 font-tit text-sm uppercase tracking-wide text-tinta-2"
                   }
                 >
                   {formatearEtiquetaJornada(jornada.etiqueta)}

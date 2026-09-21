@@ -16,7 +16,7 @@ export default async function FichaEquipoPage({
 
   const { data: equipo, error: equipoError } = await supabase
     .from("equipos")
-    .select("id, nombre, logo_url, torneo_id, orden_desempate_manual")
+    .select("id, nombre, logo_url, torneo_id, orden_desempate_manual, grupo_id")
     .eq("id", equipoId)
     .maybeSingle();
 
@@ -26,12 +26,12 @@ export default async function FichaEquipoPage({
 
   if (equipoError || !equipo) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col pb-20">
+      <div className="mx-auto flex max-w-2xl flex-col pb-24">
         <div className="flex flex-col gap-6 p-6">
           <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+            style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
           >
             No se pudo cargar la información del equipo. Intenta de nuevo.
           </p>
@@ -41,29 +41,35 @@ export default async function FichaEquipoPage({
     );
   }
 
-  const { data: torneo, error: torneoError } = await supabase
-    .from("torneos")
-    .select("categoria")
-    .eq("id", equipo.torneo_id)
-    .maybeSingle();
-
-  const { data: jugadoras, error: jugadorasError } = await supabase
-    .from("jugadoras")
-    .select("id, nombre, foto_url, numero_camiseta")
-    .eq("equipo_id", equipoId)
-    .order("nombre");
+  const [
+    { data: torneo, error: torneoError },
+    { data: jugadoras, error: jugadorasError },
+    { data: partidosLocal, error: partidosLocalError },
+    { data: partidosVisitante, error: partidosVisitanteError },
+    { data: equiposTorneo, error: equiposTorneoError },
+    { data: jornadasRegulares, error: jornadasRegularesError },
+  ] = await Promise.all([
+    supabase.from("torneos").select("categoria").eq("id", equipo.torneo_id).maybeSingle(),
+    supabase
+      .from("jugadoras")
+      .select("id, nombre, foto_url, numero_camiseta")
+      .eq("equipo_id", equipoId)
+      .order("nombre"),
+    supabase.from("partidos").select("id, fecha").eq("equipo_local_id", equipoId),
+    supabase.from("partidos").select("id, fecha").eq("equipo_visitante_id", equipoId),
+    supabase
+      .from("equipos")
+      .select("id, orden_desempate_manual, grupo_id")
+      .eq("torneo_id", equipo.torneo_id)
+      .order("nombre"),
+    supabase
+      .from("jornadas")
+      .select("id")
+      .eq("torneo_id", equipo.torneo_id)
+      .eq("tipo", "regular"),
+  ]);
 
   const idsPropias = new Set((jugadoras ?? []).map((jugadora) => jugadora.id));
-
-  const { data: partidosLocal, error: partidosLocalError } = await supabase
-    .from("partidos")
-    .select("id, fecha")
-    .eq("equipo_local_id", equipoId);
-
-  const { data: partidosVisitante, error: partidosVisitanteError } = await supabase
-    .from("partidos")
-    .select("id, fecha")
-    .eq("equipo_visitante_id", equipoId);
 
   const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(
     new Date()
@@ -73,23 +79,83 @@ export default async function FichaEquipoPage({
   );
   const partidoIds = partidos.map((partido) => partido.id);
 
-  const { data: goles, error: golesError } =
-    partidoIds.length > 0
-      ? await supabase.from("goles").select("partido_id, jugadora_id").in("partido_id", partidoIds)
-      : { data: [] as { partido_id: string; jugadora_id: string }[], error: null };
+  const equipoIdsTorneo = equipo.grupo_id
+    ? (equiposTorneo ?? [])
+        .filter((fila) => fila.grupo_id === equipo.grupo_id)
+        .map((fila) => fila.id)
+    : (equiposTorneo ?? []).map((fila) => fila.id);
+  const ordenDesempateManualPorEquipo = new Map(
+    (equiposTorneo ?? []).map((fila) => [fila.id, fila.orden_desempate_manual])
+  );
+  const jornadaIdsRegulares = (jornadasRegulares ?? []).map((jornada) => jornada.id);
 
-  const { data: tarjetas, error: tarjetasError } =
+  const [
+    { data: goles, error: golesError },
+    { data: tarjetas, error: tarjetasError },
+    { data: alineaciones, error: alineacionesError },
+    { data: jugadorasTorneo, error: jugadorasTorneoError },
+    { data: partidosTorneo, error: partidosTorneoError },
+  ] = await Promise.all([
     partidoIds.length > 0
-      ? await supabase
+      ? supabase.from("goles").select("partido_id, jugadora_id").in("partido_id", partidoIds)
+      : Promise.resolve({ data: [] as { partido_id: string; jugadora_id: string }[], error: null }),
+    partidoIds.length > 0
+      ? supabase.from("tarjetas").select("jugadora_id, tipo").in("partido_id", partidoIds)
+      : Promise.resolve({ data: [] as { jugadora_id: string; tipo: string }[], error: null }),
+    partidoIds.length > 0
+      ? supabase.from("alineaciones").select("jugadora_id").in("partido_id", partidoIds)
+      : Promise.resolve({ data: [] as { jugadora_id: string }[], error: null }),
+    equipoIdsTorneo.length > 0
+      ? supabase.from("jugadoras").select("id, equipo_id").in("equipo_id", equipoIdsTorneo)
+      : Promise.resolve({ data: [] as { id: string; equipo_id: string }[], error: null }),
+    jornadaIdsRegulares.length > 0
+      ? supabase
+          .from("partidos")
+          .select("id, equipo_local_id, equipo_visitante_id, fecha")
+          .in("jornada_id", jornadaIdsRegulares)
+      : Promise.resolve({
+          data: [] as {
+            id: string;
+            equipo_local_id: string;
+            equipo_visitante_id: string;
+            fecha: string | null;
+          }[],
+          error: null,
+        }),
+  ]);
+
+  const idsPorEquipoTorneo = new Map<string, Set<string>>();
+  for (const jugadora of jugadorasTorneo ?? []) {
+    const set = idsPorEquipoTorneo.get(jugadora.equipo_id) ?? new Set<string>();
+    set.add(jugadora.id);
+    idsPorEquipoTorneo.set(jugadora.equipo_id, set);
+  }
+
+  const partidosTorneoJugados = (partidosTorneo ?? []).filter(
+    (partido) => partido.fecha && partido.fecha <= hoy
+  );
+  const partidoIdsTorneo = partidosTorneoJugados.map((partido) => partido.id);
+
+  const [
+    { data: golesTorneo, error: golesTorneoError },
+    { data: tarjetasTorneo, error: tarjetasTorneoError },
+  ] = await Promise.all([
+    partidoIdsTorneo.length > 0
+      ? supabase
+          .from("goles")
+          .select("partido_id, jugadora_id")
+          .in("partido_id", partidoIdsTorneo)
+      : Promise.resolve({ data: [] as { partido_id: string; jugadora_id: string }[], error: null }),
+    partidoIdsTorneo.length > 0
+      ? supabase
           .from("tarjetas")
-          .select("jugadora_id, tipo")
-          .in("partido_id", partidoIds)
-      : { data: [] as { jugadora_id: string; tipo: string }[], error: null };
-
-  const { data: alineaciones, error: alineacionesError } =
-    partidoIds.length > 0
-      ? await supabase.from("alineaciones").select("jugadora_id").in("partido_id", partidoIds)
-      : { data: [] as { jugadora_id: string }[], error: null };
+          .select("partido_id, jugadora_id, tipo")
+          .in("partido_id", partidoIdsTorneo)
+      : Promise.resolve({
+          data: [] as { partido_id: string; jugadora_id: string; tipo: string }[],
+          error: null,
+        }),
+  ]);
 
   const golesPorJugadora = new Map<string, number>();
   for (const gol of goles ?? []) {
@@ -142,74 +208,6 @@ export default async function FichaEquipoPage({
   const partidosJugados = partidos.length;
   const puntos = ganados * 3 + empatados;
   const diferenciaGoles = golesFavor - golesContra;
-
-  const { data: equiposTorneo, error: equiposTorneoError } = await supabase
-    .from("equipos")
-    .select("id, orden_desempate_manual")
-    .eq("torneo_id", equipo.torneo_id)
-    .order("nombre");
-
-  const equipoIdsTorneo = (equiposTorneo ?? []).map((fila) => fila.id);
-  const ordenDesempateManualPorEquipo = new Map(
-    (equiposTorneo ?? []).map((fila) => [fila.id, fila.orden_desempate_manual])
-  );
-
-  const { data: jugadorasTorneo, error: jugadorasTorneoError } =
-    equipoIdsTorneo.length > 0
-      ? await supabase.from("jugadoras").select("id, equipo_id").in("equipo_id", equipoIdsTorneo)
-      : { data: [] as { id: string; equipo_id: string }[], error: null };
-
-  const idsPorEquipoTorneo = new Map<string, Set<string>>();
-  for (const jugadora of jugadorasTorneo ?? []) {
-    const set = idsPorEquipoTorneo.get(jugadora.equipo_id) ?? new Set<string>();
-    set.add(jugadora.id);
-    idsPorEquipoTorneo.set(jugadora.equipo_id, set);
-  }
-
-  const { data: jornadasRegulares, error: jornadasRegularesError } = await supabase
-    .from("jornadas")
-    .select("id")
-    .eq("torneo_id", equipo.torneo_id)
-    .eq("tipo", "regular");
-
-  const jornadaIdsRegulares = (jornadasRegulares ?? []).map((jornada) => jornada.id);
-
-  const { data: partidosTorneo, error: partidosTorneoError } =
-    jornadaIdsRegulares.length > 0
-      ? await supabase
-          .from("partidos")
-          .select("id, equipo_local_id, equipo_visitante_id, fecha")
-          .in("jornada_id", jornadaIdsRegulares)
-      : {
-          data: [] as {
-            id: string;
-            equipo_local_id: string;
-            equipo_visitante_id: string;
-            fecha: string | null;
-          }[],
-          error: null,
-        };
-
-  const partidosTorneoJugados = (partidosTorneo ?? []).filter(
-    (partido) => partido.fecha && partido.fecha <= hoy
-  );
-  const partidoIdsTorneo = partidosTorneoJugados.map((partido) => partido.id);
-
-  const { data: golesTorneo, error: golesTorneoError } =
-    partidoIdsTorneo.length > 0
-      ? await supabase
-          .from("goles")
-          .select("partido_id, jugadora_id")
-          .in("partido_id", partidoIdsTorneo)
-      : { data: [] as { partido_id: string; jugadora_id: string }[], error: null };
-
-  const { data: tarjetasTorneo, error: tarjetasTorneoError } =
-    partidoIdsTorneo.length > 0
-      ? await supabase
-          .from("tarjetas")
-          .select("partido_id, jugadora_id, tipo")
-          .in("partido_id", partidoIdsTorneo)
-      : { data: [] as { partido_id: string; jugadora_id: string; tipo: string }[], error: null };
 
   const partidosParaCalculo: PartidoParaPosiciones[] = partidosTorneoJugados.map((partido) => {
     const idsLocalT = idsPorEquipoTorneo.get(partido.equipo_local_id) ?? new Set<string>();
@@ -273,13 +271,13 @@ export default async function FichaEquipoPage({
   );
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col pb-20">
+    <div className="mx-auto flex max-w-2xl flex-col pb-24">
       {hayError ? (
         <div className="flex flex-col gap-6 p-6">
           <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-            style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+            style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
           >
             No se pudo cargar la información del equipo. Intenta de nuevo.
           </p>
@@ -288,11 +286,11 @@ export default async function FichaEquipoPage({
         <>
           <div
             className="flex flex-col gap-4 px-6 py-8"
-            style={{ background: "var(--tinta)" }}
+            style={{ background: "var(--vino)" }}
           >
             <BackButton oscuro />
             <div className="flex items-center gap-4">
-              <Avatar src={equipo.logo_url} nombre={equipo.nombre} size={56} />
+              <Avatar src={equipo.logo_url} nombre={equipo.nombre} size={56} tono="vino" />
               <div>
                 <h1
                   className="font-tit text-xl uppercase tracking-tight"
@@ -303,7 +301,7 @@ export default async function FichaEquipoPage({
                 {posicion > 0 && (
                   <p
                     className="font-mono text-[.62rem] uppercase tracking-wider"
-                    style={{ color: "rgba(244,237,224,.6)" }}
+                    style={{ color: "rgba(255,255,255,.6)" }}
                   >
                     {posicion}° lugar{torneo?.categoria ? ` · ${torneo.categoria}` : ""}
                   </p>
@@ -318,19 +316,19 @@ export default async function FichaEquipoPage({
                 <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Puntos
                 </dt>
-                <dd className="text-2xl font-semibold">{puntos}</dd>
+                <dd className="font-tit text-2xl">{puntos}</dd>
               </div>
               <div>
                 <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Jugados
                 </dt>
-                <dd className="text-2xl font-semibold">{partidosJugados}</dd>
+                <dd className="font-tit text-2xl">{partidosJugados}</dd>
               </div>
               <div>
                 <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   G-E-P
                 </dt>
-                <dd className="text-2xl font-semibold">
+                <dd className="font-tit text-2xl">
                   {ganados}-{empatados}-{perdidos}
                 </dd>
               </div>
@@ -338,7 +336,7 @@ export default async function FichaEquipoPage({
                 <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
                   Dif.
                 </dt>
-                <dd className="text-2xl font-semibold">
+                <dd className="font-tit text-2xl">
                   {diferenciaGoles > 0 ? `+${diferenciaGoles}` : diferenciaGoles}
                 </dd>
               </div>
@@ -347,14 +345,14 @@ export default async function FichaEquipoPage({
               <span className="text-sm">
                 <span
                   className="mr-1.5 inline-block h-3 w-2.5 rounded-[2px]"
-                  style={{ background: "#B26A12" }}
+                  style={{ background: "var(--tarjeta-amarilla)" }}
                 />
                 {tarjetasAmarillas} amarillas
               </span>
               <span className="text-sm">
                 <span
                   className="mr-1.5 inline-block h-3 w-2.5 rounded-[2px]"
-                  style={{ background: "var(--vino)" }}
+                  style={{ background: "var(--tarjeta-roja)" }}
                 />
                 {tarjetasRojas} rojas
               </span>
@@ -384,7 +382,12 @@ export default async function FichaEquipoPage({
                         <span className="w-5 flex-none text-right font-mono text-sm font-semibold text-tinta-2">
                           {jugadora.numero_camiseta ?? ""}
                         </span>
-                        <Avatar src={jugadora.foto_url} nombre={jugadora.nombre} size={32} />
+                        <Avatar
+                          src={jugadora.foto_url}
+                          nombre={jugadora.nombre}
+                          size={32}
+                          tono="vino"
+                        />
                         <span className="flex flex-col">
                           <span className="text-sm font-medium">{jugadora.nombre}</span>
                           <span className="font-mono text-[.68rem] text-tinta-2">

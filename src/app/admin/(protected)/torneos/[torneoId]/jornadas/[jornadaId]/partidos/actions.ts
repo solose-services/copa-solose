@@ -29,6 +29,27 @@ export async function crearPartido(
 
   try {
     const supabase = await createClient();
+
+    const { data: equiposSeleccionados, error: equiposError } = await supabase
+      .from("equipos")
+      .select("id, grupo_id")
+      .in("id", [values.equipoLocalId, values.equipoVisitanteId]);
+
+    if (equiposError) {
+      return { errors: {}, errorGeneral: "No se pudo crear el partido. Intenta de nuevo." };
+    }
+
+    const grupoLocal = equiposSeleccionados?.find((e) => e.id === values.equipoLocalId)?.grupo_id;
+    const grupoVisitante = equiposSeleccionados?.find(
+      (e) => e.id === values.equipoVisitanteId
+    )?.grupo_id;
+
+    if ((grupoLocal ?? null) !== (grupoVisitante ?? null)) {
+      return {
+        errors: { equipoVisitanteId: "Los equipos deben pertenecer al mismo grupo." },
+      };
+    }
+
     const { error } = await supabase.from("partidos").insert({
       jornada_id: jornadaId,
       equipo_local_id: values.equipoLocalId,

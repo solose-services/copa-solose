@@ -22,7 +22,7 @@ export default async function TorneosPage() {
       {error ? (
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
         >
           No se pudieron cargar los torneos. Intenta de nuevo.
         </p>
@@ -47,6 +47,7 @@ export default async function TorneosPage() {
                 <th className="border-b border-linea p-2"></th>
                 <th className="border-b border-linea p-2"></th>
                 <th className="border-b border-linea p-2"></th>
+                <th className="border-b border-linea p-2"></th>
               </tr>
             </thead>
             <tbody>
@@ -65,6 +66,14 @@ export default async function TorneosPage() {
                       className="text-sm font-medium text-azul underline"
                     >
                       Ver equipos
+                    </Link>
+                  </td>
+                  <td className="p-2">
+                    <Link
+                      href={`/admin/torneos/${torneo.id}/grupos`}
+                      className="text-sm font-medium text-azul underline"
+                    >
+                      Grupos
                     </Link>
                   </td>
                   <td className="p-2">

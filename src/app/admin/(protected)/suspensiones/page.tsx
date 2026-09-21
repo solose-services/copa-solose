@@ -83,7 +83,7 @@ export default async function SuspensionesPage() {
       {hayErrorDeApoyo ? (
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
         >
           No se pudo cargar la información necesaria para el formulario. Intenta de nuevo.
         </p>
@@ -95,7 +95,7 @@ export default async function SuspensionesPage() {
       {suspensionesError ? (
         <p
           className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
-          style={{ borderColor: "var(--vino)", background: "rgba(90,42,34,.09)" }}
+          style={{ borderColor: "var(--vino)", background: "color-mix(in srgb, var(--vino) 9%, var(--papel))" }}
         >
           No se pudieron cargar las suspensiones. Intenta de nuevo.
         </p>
