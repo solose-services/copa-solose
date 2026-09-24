@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { NombreJugadora } from "@/components/public/nombre-jugadora";
@@ -101,6 +102,13 @@ export default async function DetallePartidoPage({
     ])
   );
 
+  const equipoLocalId = partido.equipo_local_id;
+  const equipoVisitanteId = partido.equipo_visitante_id;
+
+  function equipoIdDeJugadora(jugadoraId: string): string {
+    return idsVisitante.has(jugadoraId) ? equipoVisitanteId : equipoLocalId;
+  }
+
   function nombreEquipoDeJugadora(jugadoraId: string): string {
     if (idsLocal.has(jugadoraId)) return equipoLocal?.nombre ?? "Local";
     if (idsVisitante.has(jugadoraId)) return equipoVisitante?.nombre ?? "Visitante";
@@ -173,6 +181,7 @@ export default async function DetallePartidoPage({
               <EtiquetaHero>{fechaTexto}</EtiquetaHero>
               <div className="grid w-full max-w-2xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 sm:gap-10">
                 <CajaEquipo
+                  equipoId={partido.equipo_local_id}
                   nombre={equipoLocal?.nombre ?? "Local"}
                   logoUrl={equipoLocal?.logo_url ?? null}
                 />
@@ -180,6 +189,7 @@ export default async function DetallePartidoPage({
                   {golesLocal}&ndash;{golesVisitante}
                 </span>
                 <CajaEquipo
+                  equipoId={partido.equipo_visitante_id}
                   nombre={equipoVisitante?.nombre ?? "Visitante"}
                   logoUrl={equipoVisitante?.logo_url ?? null}
                 />
@@ -196,13 +206,17 @@ export default async function DetallePartidoPage({
               </div>
               <div className="mt-4 grid grid-cols-2 gap-6">
                 <div className="flex flex-col gap-2">
-                  <EtiquetaHero>{equipoLocal?.nombre ?? "Local"}</EtiquetaHero>
+                  <Link href={`/equipos/${partido.equipo_local_id}`} className="w-fit hover:opacity-70">
+                    <EtiquetaHero>{equipoLocal?.nombre ?? "Local"}</EtiquetaHero>
+                  </Link>
                   <ul className="flex flex-col gap-2">
                     {jugadorasQueJugaronLocal.map(filaJugadora)}
                   </ul>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <EtiquetaHero>{equipoVisitante?.nombre ?? "Visitante"}</EtiquetaHero>
+                  <Link href={`/equipos/${partido.equipo_visitante_id}`} className="w-fit hover:opacity-70">
+                    <EtiquetaHero>{equipoVisitante?.nombre ?? "Visitante"}</EtiquetaHero>
+                  </Link>
                   <ul className="flex flex-col gap-2">
                     {jugadorasQueJugaronVisitante.map(filaJugadora)}
                   </ul>
@@ -227,7 +241,9 @@ export default async function DetallePartidoPage({
                         tono="vino"
                       />
                       <span className="font-mono text-[.68rem] text-tinta-3">
-                        {nombreEquipoDeJugadora(gol.jugadora_id)}
+                        <Link href={`/equipos/${equipoIdDeJugadora(gol.jugadora_id)}`} className="hover:text-azul">
+                          {nombreEquipoDeJugadora(gol.jugadora_id)}
+                        </Link>
                       </span>
                       <span className="ml-auto font-tit text-vino">{gol.minuto}&apos;</span>
                     </li>
@@ -261,7 +277,9 @@ export default async function DetallePartidoPage({
                         tono="vino"
                       />
                       <span className="font-mono text-[.68rem] text-tinta-3">
-                        {nombreEquipoDeJugadora(tarjeta.jugadora_id)}
+                        <Link href={`/equipos/${equipoIdDeJugadora(tarjeta.jugadora_id)}`} className="hover:text-azul">
+                          {nombreEquipoDeJugadora(tarjeta.jugadora_id)}
+                        </Link>
                       </span>
                       <span className="ml-auto font-tit text-vino">{tarjeta.minuto}&apos;</span>
                     </li>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { inicialDe } from "./avatar-helpers";
+import { urlImagen } from "@/lib/imagen";
 
 interface AvatarProps {
   src: string | null;
@@ -15,7 +16,9 @@ export function Avatar({ src, nombre, size = 24, tono = "azul" }: AvatarProps) {
   const solido = tono === "vinoSolido";
   const color = tono === "azul" ? "var(--azul)" : "var(--vino)";
 
-  if (!src || fallo) {
+  const url = urlImagen(src, Math.max(64, size * 2));
+
+  if (!url || fallo) {
     return (
       <span
         aria-hidden="true"
@@ -36,10 +39,13 @@ export function Avatar({ src, nombre, size = 24, tono = "azul" }: AvatarProps) {
   return (
     // eslint-disable-next-line @next/next/no-img-element -- URLs arbitrarias pegadas por el admin, next/image exigiría lista blanca de dominios
     <img
-      src={src}
+      src={url}
       alt=""
+      loading={size > 60 ? "eager" : "lazy"}
+      decoding="async"
+      referrerPolicy="no-referrer"
       onError={() => setFallo(true)}
-      className="flex-none rounded-full object-cover"
+      className="flex-none rounded-full object-cover object-top"
       style={{ width: size, height: size }}
     />
   );
