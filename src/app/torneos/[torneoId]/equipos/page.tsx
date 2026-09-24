@@ -63,7 +63,7 @@ export default async function EquiposTorneoPage({
                 <h2 className="font-tit text-sm uppercase tracking-[.1em] text-tinta-2">
                   {grupo.nombre}
                 </h2>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {equiposDelGrupo.map((equipo) => (
                     <TarjetaEquipo key={equipo.id} equipo={equipo} />
                   ))}
@@ -79,7 +79,7 @@ export default async function EquiposTorneoPage({
                 <h2 className="font-tit text-sm uppercase tracking-[.1em] text-tinta-2">
                   Sin grupo
                 </h2>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {sinGrupo.map((equipo) => (
                     <TarjetaEquipo key={equipo.id} equipo={equipo} />
                   ))}
@@ -89,7 +89,7 @@ export default async function EquiposTorneoPage({
           })()}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {(equipos ?? []).map((equipo) => (
             <TarjetaEquipo key={equipo.id} equipo={equipo} />
           ))}

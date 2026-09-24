@@ -1,8 +1,14 @@
-export function Logo() {
+import Image from "next/image";
+
+export function Logo({ className = "h-8 w-auto" }: { className?: string }) {
   return (
-    <span className="font-tit text-2xl font-semibold uppercase tracking-tight text-azul">
-      Solosé
-      <sup className="ml-0.5 text-xs align-super">&copy;</sup>
-    </span>
+    <Image
+      src="/logo-casita-solose.png"
+      alt="Casita Solosé"
+      width={900}
+      height={155}
+      priority
+      className={className}
+    />
   );
 }

@@ -7,24 +7,25 @@ interface AvatarProps {
   src: string | null;
   nombre: string;
   size?: number;
-  tono?: "azul" | "vino";
+  tono?: "azul" | "vino" | "vinoSolido";
 }
 
 export function Avatar({ src, nombre, size = 24, tono = "azul" }: AvatarProps) {
   const [fallo, setFallo] = useState(false);
-  const color = tono === "vino" ? "var(--vino)" : "var(--azul)";
+  const solido = tono === "vinoSolido";
+  const color = tono === "azul" ? "var(--azul)" : "var(--vino)";
 
   if (!src || fallo) {
     return (
       <span
         aria-hidden="true"
-        className="inline-flex flex-none items-center justify-center rounded-full font-mono font-medium"
+        className="inline-flex flex-none items-center justify-center rounded-full font-tit"
         style={{
           width: size,
           height: size,
           fontSize: size * 0.45,
-          background: `color-mix(in srgb, ${color} 14%, var(--papel))`,
-          color,
+          background: solido ? "var(--vino)" : `color-mix(in srgb, ${color} 14%, var(--papel))`,
+          color: solido ? "var(--amarillo)" : color,
         }}
       >
         {inicialDe(nombre)}

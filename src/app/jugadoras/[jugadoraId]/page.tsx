@@ -5,6 +5,7 @@ import { NombreEquipo } from "@/components/public/nombre-equipo";
 import { Avatar } from "@/components/ui/avatar";
 import { BackButton } from "@/components/public/back-button";
 import { BottomNav } from "@/components/public/bottom-nav";
+import { FichaHero, FichaCuerpo, EtiquetaHero, DatoHero } from "@/components/public/ficha-layout";
 import { formatearEtiquetaJornada } from "@/lib/jornada";
 
 export default async function FichaJugadoraPage({
@@ -27,7 +28,7 @@ export default async function FichaJugadoraPage({
 
   if (jugadoraError || !jugadora) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col pb-24">
+      <div className="mx-auto flex w-full max-w-[1160px] flex-col px-4 pb-28">
         <div className="flex flex-col gap-6 p-6">
           <BackButton />
           <p
@@ -218,9 +219,9 @@ export default async function FichaJugadoraPage({
   );
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col pb-24">
+    <div className="flex w-full flex-col pb-28">
       {hayError ? (
-        <div className="flex flex-col gap-6 p-6">
+        <FichaCuerpo className="flex flex-col gap-6">
           <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
@@ -228,83 +229,71 @@ export default async function FichaJugadoraPage({
           >
             No se pudo cargar la información de la jugadora. Intenta de nuevo.
           </p>
-        </div>
+        </FichaCuerpo>
       ) : (
         <>
-          <div
-            className="flex flex-col gap-4 px-6 py-8"
-            style={{ background: "var(--vino)", color: "var(--crema)" }}
-          >
-            <BackButton oscuro />
-            <div className="flex items-center gap-4">
-              <Avatar src={jugadora.foto_url} nombre={jugadora.nombre} size={56} tono="vino" />
-              <div>
-                <h1 className="font-tit text-xl uppercase tracking-tight">{jugadora.nombre}</h1>
+          <FichaHero>
+            <BackButton amarillo />
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Avatar
+                src={jugadora.foto_url}
+                nombre={jugadora.nombre}
+                size={80}
+                tono="vinoSolido"
+              />
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <EtiquetaHero>
+                  Jugadora{jugadora.numero_camiseta != null ? ` · #${jugadora.numero_camiseta}` : ""}
+                </EtiquetaHero>
+                <h1 className="font-tit text-3xl uppercase leading-none sm:text-5xl">
+                  {jugadora.nombre}
+                </h1>
                 {equipo && (
-                  <NombreEquipo
-                    id={equipo.id}
-                    nombre={equipo.nombre}
-                    logoUrl={equipo.logo_url}
-                    tono="vino"
-                  />
+                  <span className="font-tit text-base uppercase tracking-wide">
+                    <NombreEquipo
+                      id={equipo.id}
+                      nombre={equipo.nombre}
+                      logoUrl={equipo.logo_url}
+                      tono="vinoSolido"
+                    />
+                  </span>
                 )}
               </div>
             </div>
-          </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
+              <DatoHero etiqueta="Jugados" valor={partidoIds.length} />
+              <DatoHero etiqueta="G-E-P" valor={`${ganados}-${empatados}-${perdidos}`} />
+              <DatoHero etiqueta="Goles" valor={totalGoles} />
+              <DatoHero etiqueta="MVP" valor={vecesMvp ?? 0} />
+            </div>
+          </FichaHero>
 
-          <div className="flex flex-col gap-6 p-6">
-            {contextoGoleo && (
-              <p
-                className="rounded-sm border-l-2 border-azul px-3 py-2.5 text-sm"
-                style={{ background: "rgba(22,0,251,.07)" }}
-              >
-                {contextoGoleo} · {totalGoles} gol{totalGoles === 1 ? "" : "es"} en el torneo
-              </p>
-            )}
-
-            <dl className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
-              <div>
-                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  Jugados
-                </dt>
-                <dd className="font-tit text-2xl">{partidoIds.length}</dd>
+          <FichaCuerpo className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+            <div className="flex flex-col gap-5">
+              {contextoGoleo && (
+                <p
+                  className="rounded-sm border-l-4 border-azul px-4 py-3 font-tit text-sm uppercase tracking-wide text-vino"
+                  style={{ background: "var(--amarillo-suave)" }}
+                >
+                  {contextoGoleo} · {totalGoles} gol{totalGoles === 1 ? "" : "es"} en el torneo
+                </p>
+              )}
+              <div className="flex flex-wrap gap-x-6 gap-y-2">
+                <span className="text-sm">
+                  <span
+                    className="mr-1.5 inline-block h-3.5 w-3 rounded-[2px] align-middle"
+                    style={{ background: "var(--tarjeta-amarilla)" }}
+                  />
+                  {totalAmarillas} amarillas
+                </span>
+                <span className="text-sm">
+                  <span
+                    className="mr-1.5 inline-block h-3.5 w-3 rounded-[2px] align-middle"
+                    style={{ background: "var(--tarjeta-roja)" }}
+                  />
+                  {totalRojas} rojas
+                </span>
               </div>
-              <div>
-                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  G-E-P
-                </dt>
-                <dd className="font-tit text-2xl">
-                  {ganados}-{empatados}-{perdidos}
-                </dd>
-              </div>
-              <div>
-                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  Goles
-                </dt>
-                <dd className="font-tit text-2xl">{totalGoles}</dd>
-              </div>
-              <div>
-                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  MVP
-                </dt>
-                <dd className="font-tit text-2xl">{vecesMvp ?? 0}</dd>
-              </div>
-            </dl>
-            <div className="flex gap-6">
-              <span className="text-sm">
-                <span
-                  className="mr-1.5 inline-block h-3 w-2.5 rounded-[2px]"
-                  style={{ background: "var(--tarjeta-amarilla)" }}
-                />
-                {totalAmarillas} amarillas
-              </span>
-              <span className="text-sm">
-                <span
-                  className="mr-1.5 inline-block h-3 w-2.5 rounded-[2px]"
-                  style={{ background: "var(--tarjeta-roja)" }}
-                />
-                {totalRojas} rojas
-              </span>
             </div>
 
             {ultimosPartidos.length > 0 && (
@@ -322,13 +311,13 @@ export default async function FichaJugadoraPage({
                     >
                       <Link
                         href={`/partidos/${partido.partidoId}`}
-                        className="flex items-center gap-3 py-2.5 text-sm hover:text-azul"
+                        className="flex items-center gap-3 py-3 text-sm hover:text-azul"
                       >
-                        <span className="w-8 flex-none font-mono text-xs text-tinta-2">
+                        <span className="w-8 flex-none font-tit text-sm text-vino">
                           {partido.jornada ? formatearEtiquetaJornada(partido.jornada.etiqueta) : ""}
                         </span>
                         <span className="flex-1">vs {partido.rivalNombre}</span>
-                        <span className="font-mono font-medium">
+                        <span className="font-tit text-base">
                           {partido.marcador.propios}&ndash;{partido.marcador.rivales}
                         </span>
                         <span className="w-16 flex-none text-right font-mono text-xs text-tinta-2">
@@ -342,7 +331,7 @@ export default async function FichaJugadoraPage({
                 </ul>
               </section>
             )}
-          </div>
+          </FichaCuerpo>
         </>
       )}
       <BottomNav torneoId={equipo?.torneo_id ?? null} />

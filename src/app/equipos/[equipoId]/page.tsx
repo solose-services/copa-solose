@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/ui/avatar";
 import { BackButton } from "@/components/public/back-button";
 import { BottomNav } from "@/components/public/bottom-nav";
+import { FichaHero, FichaCuerpo, EtiquetaHero, DatoHero } from "@/components/public/ficha-layout";
 import { calcularPosiciones, type PartidoParaPosiciones } from "@/lib/posiciones";
 
 export default async function FichaEquipoPage({
@@ -26,7 +27,7 @@ export default async function FichaEquipoPage({
 
   if (equipoError || !equipo) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col pb-24">
+      <div className="mx-auto flex w-full max-w-[1160px] flex-col px-4 pb-28">
         <div className="flex flex-col gap-6 p-6">
           <BackButton />
           <p
@@ -271,9 +272,9 @@ export default async function FichaEquipoPage({
   );
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col pb-24">
+    <div className="flex w-full flex-col pb-28">
       {hayError ? (
-        <div className="flex flex-col gap-6 p-6">
+        <FichaCuerpo className="flex flex-col gap-6">
           <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
@@ -281,77 +282,46 @@ export default async function FichaEquipoPage({
           >
             No se pudo cargar la información del equipo. Intenta de nuevo.
           </p>
-        </div>
+        </FichaCuerpo>
       ) : (
         <>
-          <div
-            className="flex flex-col gap-4 px-6 py-8"
-            style={{ background: "var(--vino)" }}
-          >
-            <BackButton oscuro />
-            <div className="flex items-center gap-4">
-              <Avatar src={equipo.logo_url} nombre={equipo.nombre} size={56} tono="vino" />
-              <div>
-                <h1
-                  className="font-tit text-xl uppercase tracking-tight"
-                  style={{ color: "var(--crema)" }}
-                >
+          <FichaHero>
+            <BackButton amarillo />
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Avatar src={equipo.logo_url} nombre={equipo.nombre} size={80} tono="vinoSolido" />
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <EtiquetaHero>
+                  Equipo{torneo?.categoria ? ` · ${torneo.categoria}` : ""}
+                </EtiquetaHero>
+                <h1 className="font-tit text-3xl uppercase leading-none sm:text-5xl">
                   {equipo.nombre}
                 </h1>
-                {posicion > 0 && (
-                  <p
-                    className="font-mono text-[.62rem] uppercase tracking-wider"
-                    style={{ color: "rgba(255,255,255,.6)" }}
-                  >
-                    {posicion}° lugar{torneo?.categoria ? ` · ${torneo.categoria}` : ""}
-                  </p>
-                )}
+                {posicion > 0 && <EtiquetaHero>{posicion}° lugar en la tabla</EtiquetaHero>}
               </div>
             </div>
-          </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
+              <DatoHero etiqueta="Puntos" valor={puntos} />
+              <DatoHero etiqueta="Jugados" valor={partidosJugados} />
+              <DatoHero etiqueta="G-E-P" valor={`${ganados}-${empatados}-${perdidos}`} />
+              <DatoHero
+                etiqueta="Diferencia"
+                valor={diferenciaGoles > 0 ? `+${diferenciaGoles}` : diferenciaGoles}
+              />
+            </div>
+          </FichaHero>
 
-          <div className="flex flex-col gap-6 p-6">
-            <dl className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
-              <div>
-                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  Puntos
-                </dt>
-                <dd className="font-tit text-2xl">{puntos}</dd>
-              </div>
-              <div>
-                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  Jugados
-                </dt>
-                <dd className="font-tit text-2xl">{partidosJugados}</dd>
-              </div>
-              <div>
-                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  G-E-P
-                </dt>
-                <dd className="font-tit text-2xl">
-                  {ganados}-{empatados}-{perdidos}
-                </dd>
-              </div>
-              <div>
-                <dt className="font-mono text-[.62rem] uppercase tracking-wider text-tinta-2">
-                  Dif.
-                </dt>
-                <dd className="font-tit text-2xl">
-                  {diferenciaGoles > 0 ? `+${diferenciaGoles}` : diferenciaGoles}
-                </dd>
-              </div>
-            </dl>
-            <div className="flex gap-6">
+          <FichaCuerpo className="flex flex-col gap-6">
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
               <span className="text-sm">
                 <span
-                  className="mr-1.5 inline-block h-3 w-2.5 rounded-[2px]"
+                  className="mr-1.5 inline-block h-3.5 w-3 rounded-[2px] align-middle"
                   style={{ background: "var(--tarjeta-amarilla)" }}
                 />
                 {tarjetasAmarillas} amarillas
               </span>
               <span className="text-sm">
                 <span
-                  className="mr-1.5 inline-block h-3 w-2.5 rounded-[2px]"
+                  className="mr-1.5 inline-block h-3.5 w-3 rounded-[2px] align-middle"
                   style={{ background: "var(--tarjeta-roja)" }}
                 />
                 {tarjetasRojas} rojas
@@ -364,7 +334,7 @@ export default async function FichaEquipoPage({
                   Jugadoras registradas · {jugadoras?.length ?? 0}
                 </h2>
               </div>
-              <ul className="mt-1 flex flex-col">
+              <ul className="mt-1 grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
                 {(jugadoras ?? []).map((jugadora) => {
                   const goles = golesPorJugadora.get(jugadora.id) ?? 0;
                   const partidosJugadosJugadora = partidosJugadosPorJugadora.get(jugadora.id) ?? 0;
@@ -374,18 +344,18 @@ export default async function FichaEquipoPage({
                   ].filter((parte): parte is string => Boolean(parte));
 
                   return (
-                    <li key={jugadora.id} className="border-b border-linea-2 last:border-b-0">
+                    <li key={jugadora.id} className="border-b border-linea-2">
                       <Link
                         href={`/jugadoras/${jugadora.id}`}
-                        className="flex items-center gap-3 py-2.5 hover:text-azul"
+                        className="flex items-center gap-3 py-3 hover:text-azul"
                       >
-                        <span className="w-5 flex-none text-right font-mono text-sm font-semibold text-tinta-2">
+                        <span className="w-6 flex-none text-right font-tit text-base text-vino">
                           {jugadora.numero_camiseta ?? ""}
                         </span>
                         <Avatar
                           src={jugadora.foto_url}
                           nombre={jugadora.nombre}
-                          size={32}
+                          size={36}
                           tono="vino"
                         />
                         <span className="flex flex-col">
@@ -400,7 +370,7 @@ export default async function FichaEquipoPage({
                 })}
               </ul>
             </section>
-          </div>
+          </FichaCuerpo>
         </>
       )}
       <BottomNav torneoId={equipo.torneo_id} />

@@ -10,7 +10,7 @@ export function NombreEquipo({
   id: string;
   nombre: string;
   logoUrl?: string | null;
-  tono?: "azul" | "vino";
+  tono?: "azul" | "vino" | "vinoSolido";
 }) {
   return (
     <Link href={`/equipos/${id}`} className="inline-flex items-center gap-1.5 hover:text-azul">

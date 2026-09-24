@@ -18,10 +18,10 @@ export default async function PrincipalPage() {
   ]);
 
   return (
-    <div className="mx-auto flex max-w-[1160px] flex-col">
+    <div className="mx-auto flex w-full max-w-[1160px] flex-col">
       <main className="flex flex-col gap-8 p-6">
         <h1>
-          <Logo />
+          <Logo className="h-11 w-auto" />
         </h1>
 
         <section className="flex flex-col gap-4">
@@ -69,12 +69,12 @@ export default async function PrincipalPage() {
           ) : (torneos ?? []).length === 0 ? (
             <p className="text-sm text-tinta-2">Todavía no hay torneos activos.</p>
           ) : (
-            <div className="flex flex-wrap gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {(torneos ?? []).map((torneo) => (
                 <Link
                   key={torneo.id}
                   href={`/torneos/${torneo.id}/calendario`}
-                  className="rounded-sm border border-linea bg-papel p-6 text-center font-tit text-lg uppercase tracking-tight text-tinta hover:border-azul hover:text-azul"
+                  className="rounded-sm border-2 border-azul bg-papel px-6 py-7 text-center font-tit text-xl uppercase tracking-[.06em] text-azul [word-spacing:.35em] hover:bg-azul hover:text-white"
                 >
                   {torneo.nombre}
                 </Link>

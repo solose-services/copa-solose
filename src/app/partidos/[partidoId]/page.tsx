@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NombreJugadora } from "@/components/public/nombre-jugadora";
 import { BackButton } from "@/components/public/back-button";
 import { BottomNav } from "@/components/public/bottom-nav";
+import { FichaHero, FichaCuerpo, EtiquetaHero } from "@/components/public/ficha-layout";
+import { formatearFechaCorta, formatearHora } from "@/lib/fecha";
 import { contarMarcador } from "@/lib/marcador";
 import { formatearEtiquetaJornada } from "@/lib/jornada";
 import { CajaEquipo } from "./caja-equipo";
@@ -29,7 +31,7 @@ export default async function DetallePartidoPage({
 
   if (partidoError || !partido) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col pb-24">
+      <div className="mx-auto flex w-full max-w-[1160px] flex-col px-4 pb-28">
         <div className="flex flex-col gap-6 p-6">
           <BackButton />
           <p
@@ -129,10 +131,32 @@ export default async function DetallePartidoPage({
     .filter((jugadora) => (alineaciones ?? []).some((fila) => fila.jugadora_id === jugadora.id))
     .sort((a, b) => (a.numero_camiseta ?? 99) - (b.numero_camiseta ?? 99));
 
+  const fechaTexto = [
+    jornada ? formatearEtiquetaJornada(jornada.etiqueta) : "Jornada",
+    partido.fecha ? formatearFechaCorta(partido.fecha) : "Sin fecha",
+    partido.hora ? formatearHora(partido.hora) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const filaJugadora = (jugadora: (typeof jugadorasQueJugaronLocal)[number]) => (
+    <li key={jugadora.id} className="flex items-center gap-2">
+      <span className="w-6 text-right font-tit text-sm text-vino">
+        {jugadora.numero_camiseta ?? ""}
+      </span>
+      <NombreJugadora
+        id={jugadora.id}
+        nombre={jugadora.nombre}
+        fotoUrl={jugadora.foto_url}
+        tono="vino"
+      />
+    </li>
+  );
+
   return (
-    <div className="mx-auto flex max-w-2xl flex-col pb-24">
+    <div className="flex w-full flex-col pb-28">
       {hayError ? (
-        <div className="flex flex-col gap-6 p-6">
+        <FichaCuerpo className="flex flex-col gap-6">
           <BackButton />
           <p
             className="rounded-sm border-l-2 px-3 py-2.5 text-sm"
@@ -140,18 +164,19 @@ export default async function DetallePartidoPage({
           >
             No se pudo cargar el detalle del partido. Intenta de nuevo.
           </p>
-        </div>
+        </FichaCuerpo>
       ) : (
         <>
-          <div className="flex flex-col gap-3 px-6 py-8" style={{ background: "var(--vino)" }}>
-            <BackButton oscuro />
-            <div className="flex flex-col items-center gap-3">
-              <div className="flex items-center gap-6">
+          <FichaHero>
+            <BackButton amarillo />
+            <div className="flex flex-col items-center gap-5">
+              <EtiquetaHero>{fechaTexto}</EtiquetaHero>
+              <div className="grid w-full max-w-2xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 sm:gap-10">
                 <CajaEquipo
                   nombre={equipoLocal?.nombre ?? "Local"}
                   logoUrl={equipoLocal?.logo_url ?? null}
                 />
-                <span className="font-tit text-4xl font-semibold" style={{ color: "var(--azul)" }}>
+                <span className="font-tit text-5xl leading-none text-azul sm:text-7xl">
                   {golesLocal}&ndash;{golesVisitante}
                 </span>
                 <CajaEquipo
@@ -159,138 +184,111 @@ export default async function DetallePartidoPage({
                   logoUrl={equipoVisitante?.logo_url ?? null}
                 />
               </div>
-              <p
-                className="font-mono text-[.62rem] uppercase tracking-wider"
-                style={{ color: "rgba(255,255,255,.5)" }}
-              >
-                {jornada ? formatearEtiquetaJornada(jornada.etiqueta) : "Jornada"} ·{" "}
-                {partido.fecha ?? "Sin fecha"}
-              </p>
             </div>
-          </div>
+          </FichaHero>
 
-          <div className="flex flex-col gap-6 p-6">
+          <FichaCuerpo className="grid items-start gap-8 lg:grid-cols-2">
             <section>
               <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
                 <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
                   Alineaciones
                 </h2>
               </div>
-              <div className="mt-3 flex flex-wrap gap-8">
-                <ul className="flex flex-col gap-1.5">
-                  {jugadorasQueJugaronLocal.map((jugadora) => (
-                    <li key={jugadora.id} className="flex items-center gap-2">
-                      {jugadora.numero_camiseta != null && (
-                        <span className="w-5 text-right font-mono text-xs text-tinta-2">
-                          {jugadora.numero_camiseta}
-                        </span>
-                      )}
+              <div className="mt-4 grid grid-cols-2 gap-6">
+                <div className="flex flex-col gap-2">
+                  <EtiquetaHero>{equipoLocal?.nombre ?? "Local"}</EtiquetaHero>
+                  <ul className="flex flex-col gap-2">
+                    {jugadorasQueJugaronLocal.map(filaJugadora)}
+                  </ul>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <EtiquetaHero>{equipoVisitante?.nombre ?? "Visitante"}</EtiquetaHero>
+                  <ul className="flex flex-col gap-2">
+                    {jugadorasQueJugaronVisitante.map(filaJugadora)}
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <div className="flex flex-col gap-8">
+              <section>
+                <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
+                  <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
+                    Goles
+                  </h2>
+                </div>
+                <ul className="mt-3 flex flex-col gap-2">
+                  {(goles ?? []).map((gol, indice) => (
+                    <li key={indice} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
                       <NombreJugadora
-                        id={jugadora.id}
-                        nombre={jugadora.nombre}
-                        fotoUrl={jugadora.foto_url}
+                        id={gol.jugadora_id}
+                        nombre={jugadoraPorId.get(gol.jugadora_id)?.nombre ?? "Jugadora"}
+                        fotoUrl={jugadoraPorId.get(gol.jugadora_id)?.fotoUrl ?? null}
                         tono="vino"
                       />
+                      <span className="font-mono text-[.68rem] text-tinta-3">
+                        {nombreEquipoDeJugadora(gol.jugadora_id)}
+                      </span>
+                      <span className="ml-auto font-tit text-vino">{gol.minuto}&apos;</span>
                     </li>
                   ))}
                 </ul>
-                <ul className="flex flex-col gap-1.5">
-                  {jugadorasQueJugaronVisitante.map((jugadora) => (
-                    <li key={jugadora.id} className="flex items-center gap-2">
-                      {jugadora.numero_camiseta != null && (
-                        <span className="w-5 text-right font-mono text-xs text-tinta-2">
-                          {jugadora.numero_camiseta}
-                        </span>
-                      )}
-                      <NombreJugadora
-                        id={jugadora.id}
-                        nombre={jugadora.nombre}
-                        fotoUrl={jugadora.foto_url}
-                        tono="vino"
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-
-            <section>
-              <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
-                <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
-                  Goles
-                </h2>
-              </div>
-              <ul className="mt-3 flex flex-col gap-1.5">
-                {(goles ?? []).map((gol, indice) => (
-                  <li key={indice} className="flex items-center gap-2 text-sm">
-                    <NombreJugadora
-                      id={gol.jugadora_id}
-                      nombre={jugadoraPorId.get(gol.jugadora_id)?.nombre ?? "Jugadora"}
-                      fotoUrl={jugadoraPorId.get(gol.jugadora_id)?.fotoUrl ?? null}
-                      tono="vino"
-                    />
-                    <span className="font-mono text-[.68rem] text-tinta-3">
-                      {nombreEquipoDeJugadora(gol.jugadora_id)}
-                    </span>
-                    <span className="ml-auto font-mono text-tinta-2">{gol.minuto}&apos;</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <section>
-              <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
-                <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
-                  Tarjetas
-                </h2>
-              </div>
-              <ul className="mt-3 flex flex-col gap-1.5">
-                {(tarjetas ?? []).map((tarjeta, indice) => (
-                  <li key={indice} className="flex items-center gap-2 text-sm">
-                    <span
-                      aria-label={tarjeta.tipo}
-                      className="inline-block h-3 w-2.5 flex-none rounded-[2px]"
-                      style={{
-                        background:
-                          tarjeta.tipo === "roja"
-                            ? "var(--tarjeta-roja)"
-                            : "var(--tarjeta-amarilla)",
-                      }}
-                    />
-                    <NombreJugadora
-                      id={tarjeta.jugadora_id}
-                      nombre={jugadoraPorId.get(tarjeta.jugadora_id)?.nombre ?? "Jugadora"}
-                      fotoUrl={jugadoraPorId.get(tarjeta.jugadora_id)?.fotoUrl ?? null}
-                      tono="vino"
-                    />
-                    <span className="font-mono text-[.68rem] text-tinta-3">
-                      {nombreEquipoDeJugadora(tarjeta.jugadora_id)}
-                    </span>
-                    <span className="ml-auto font-mono text-tinta-2">{tarjeta.minuto}&apos;</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            {partido.mvp_jugadora_id && (
-              <section
-                className="flex flex-col gap-1 rounded-md border border-linea p-3"
-                style={{ background: "var(--papel)" }}
-              >
-                <span className="font-mono text-[.6rem] uppercase tracking-wider text-tinta-2">
-                  Jugadora del partido
-                </span>
-                <NombreJugadora
-                  id={partido.mvp_jugadora_id}
-                  nombre={jugadoraPorId.get(partido.mvp_jugadora_id)?.nombre ?? "Jugadora"}
-                  fotoUrl={jugadoraPorId.get(partido.mvp_jugadora_id)?.fotoUrl ?? null}
-                  tono="vino"
-                />
               </section>
-            )}
+
+              <section>
+                <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
+                  <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
+                    Tarjetas
+                  </h2>
+                </div>
+                <ul className="mt-3 flex flex-col gap-2">
+                  {(tarjetas ?? []).map((tarjeta, indice) => (
+                    <li key={indice} className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
+                      <span
+                        aria-label={tarjeta.tipo}
+                        className="inline-block h-3.5 w-3 flex-none rounded-[2px]"
+                        style={{
+                          background:
+                            tarjeta.tipo === "roja"
+                              ? "var(--tarjeta-roja)"
+                              : "var(--tarjeta-amarilla)",
+                        }}
+                      />
+                      <NombreJugadora
+                        id={tarjeta.jugadora_id}
+                        nombre={jugadoraPorId.get(tarjeta.jugadora_id)?.nombre ?? "Jugadora"}
+                        fotoUrl={jugadoraPorId.get(tarjeta.jugadora_id)?.fotoUrl ?? null}
+                        tono="vino"
+                      />
+                      <span className="font-mono text-[.68rem] text-tinta-3">
+                        {nombreEquipoDeJugadora(tarjeta.jugadora_id)}
+                      </span>
+                      <span className="ml-auto font-tit text-vino">{tarjeta.minuto}&apos;</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              {partido.mvp_jugadora_id && (
+                <section
+                  className="flex flex-col gap-1.5 rounded-md border-l-4 border-azul p-4"
+                  style={{ background: "var(--amarillo-suave)" }}
+                >
+                  <EtiquetaHero>Jugadora del partido</EtiquetaHero>
+                  <span className="font-tit text-lg text-vino">
+                    <NombreJugadora
+                      id={partido.mvp_jugadora_id}
+                      nombre={jugadoraPorId.get(partido.mvp_jugadora_id)?.nombre ?? "Jugadora"}
+                      fotoUrl={jugadoraPorId.get(partido.mvp_jugadora_id)?.fotoUrl ?? null}
+                      tono="vino"
+                    />
+                  </span>
+                </section>
+              )}
+            </div>
 
             {partido.incidencias && (
-              <section>
+              <section className="lg:col-span-2">
                 <div className="flex items-baseline gap-2 border-b-2 border-azul pb-2">
                   <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
                     Incidencias
@@ -299,7 +297,7 @@ export default async function DetallePartidoPage({
                 <p className="mt-3 text-sm">{partido.incidencias}</p>
               </section>
             )}
-          </div>
+          </FichaCuerpo>
         </>
       )}
       <BottomNav torneoId={jornada?.torneo_id ?? null} />

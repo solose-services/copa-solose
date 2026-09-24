@@ -155,7 +155,7 @@ export default async function CalendarioPage({
           </nav>
 
           {jornadaSeleccionada ? (
-            <>
+            <div className="grid items-start gap-8 lg:grid-cols-2">
               <section className="flex flex-col gap-2">
                 <div className="flex items-baseline justify-between gap-2 border-b-2 border-azul pb-2">
                   <h2 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
@@ -274,7 +274,7 @@ export default async function CalendarioPage({
                   </ul>
                 </section>
               )}
-            </>
+            </div>
           ) : (
             <p className="text-sm text-tinta-2">Todavía no hay jornadas registradas.</p>
           )}

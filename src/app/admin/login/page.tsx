@@ -47,7 +47,9 @@ export default function LoginPage() {
       className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-6"
       style={{ background: "var(--tinta)", color: "var(--crema)" }}
     >
-      <Logo />
+      <div className="self-start rounded-md bg-white px-4 py-3">
+        <Logo className="h-9 w-auto" />
+      </div>
       <h1 className="font-tit text-[.82rem] uppercase tracking-[.13em] text-azul">
         Acceso de administración
       </h1>
